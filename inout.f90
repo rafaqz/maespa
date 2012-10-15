@@ -372,8 +372,10 @@ SUBROUTINE write_header_information(NSPECIES,SPECIESNAMES, &
             WRITE (UHRLY,720)
             WRITE (UHRLY,721)
             WRITE (UHRLY,722)
-            WRITE (UHRLY, 990) ' '
             WRITE (UHRLY,723)
+            WRITE (UHRLY,724)
+            WRITE (UHRLY, 990) ' '
+            WRITE (UHRLY,725)
         END IF
     
         ! Comments to respiration output file (if required).    
@@ -563,8 +565,9 @@ SUBROUTINE write_header_information(NSPECIES,SPECIESNAMES, &
             WRITE (UHRLYHDR,720)
             WRITE (UHRLYHDR,721)
             WRITE (UHRLYHDR,722)
+            WRITE (UHRLYHDR,724)
             WRITE (UHRLYHDR, 990) ' '
-            WRITE (UHRLYHDR,723)
+            WRITE (UHRLYHDR,725)
         END IF
     
         ! Comments to respiration output file (if required).    
@@ -716,13 +719,15 @@ SUBROUTINE write_header_information(NSPECIES,SPECIESNAMES, &
     714 FORMAT('Gbhcan: canopy boundary layer conductance to heat : mol tree-1 s-1')
     715 FORMAT('hrH:   hourly sensible heat flux:  MJ tree-1 s-1')
     716 FORMAT('TCAN: Average foliage temperature (deg C)')
-    717 FORMAT('PSIL: Canopy average leaf water potential (MPa)')
-    718 FORMAT('PSILMIN: Canopy minimum leaf water potential (MPa)')
-    719 FORMAT('CI : Canopy average intercellular CO2 conc. (ppm)')
-    720 FORMAT('TAIR: Air temperature (deg C)')
-    721 FORMAT('VPD: vapor pressure deficit (kPa)')
-    722 FORMAT('PAR: Above-canopy incident PAR (umol m-2 s-1)')
-    723 FORMAT('Columns: DOY Tree Spec HOUR hrPAR hrNIR hrTHM', &
+    717 FORMAT('ELMAX: Canopy maximum leaf transpiration rate (mmol m-2 s-1)')
+    718 FORMAT('ALMAX: Canopy maximum leaf photosynthesis rate (umol m-2 s-1)')
+    719 FORMAT('PSIL: Canopy average leaf water potential (MPa)')
+    720 FORMAT('PSILMIN: Canopy minimum leaf water potential (MPa)')
+    721 FORMAT('CI : Canopy average intercellular CO2 conc. (ppm)')
+    722 FORMAT('TAIR: Air temperature (deg C)')
+    723 FORMAT('VPD: vapor pressure deficit (kPa)')
+    724 FORMAT('PAR: Above-canopy incident PAR (umol m-2 s-1)')
+    725 FORMAT('Columns: DOY Tree Spec HOUR hrPAR hrNIR hrTHM', &
                ' hrPs hrRf hrRmW hrLE', &
                ' LECAN Gscan Gbhcan hrH TCAN PSIL PSILMIN CI TAIR VPD PAR')
 
@@ -1899,7 +1904,7 @@ SUBROUTINE OUTPUTHR(IDAY,IHOUR,NOTARGETS,ITARGETS,ISPECIES,         &
                     TCAN,NOLAY,PPAR,PPS,PTRANSP,FOLLAY,             &
                     THRAB,FCO2,FRESPF,FRESPW,FRESPB,                &
                     FH2OT,GSCAN,GBHCAN,FH2OCAN,FHEAT,VPD,TAIR,PAR,  &
-                    PSILCAN,PSILCANMIN,CICAN)
+                    PSILCAN,PSILCANMIN,CICAN,ECANMAX,ACANMAX)
 ! Output the hourly totals
 !**********************************************************************
     USE switches
@@ -1918,6 +1923,7 @@ SUBROUTINE OUTPUTHR(IDAY,IHOUR,NOTARGETS,ITARGETS,ISPECIES,         &
     REAL PTRANSP(MAXT,MAXLAY,MAXHRS)
     REAL FOLLAY(MAXLAY),TCAN(MAXT,MAXHRS),VPD(MAXHRS)
     REAL TAIR(MAXHRS),PAR(MAXHRS)
+    REAL ECANMAX(MAXT,MAXHRS),ACANMAX(MAXT,MAXHRS)
     REAL PSILCAN(MAXT,MAXHRS),PSILCANMIN(MAXT,MAXHRS),CICAN(MAXT,MAXHRS)
     
 
@@ -1933,6 +1939,7 @@ SUBROUTINE OUTPUTHR(IDAY,IHOUR,NOTARGETS,ITARGETS,ISPECIES,         &
                                     FH2OT(ITAR,IHOUR)*1e-3,                                     &
                                     FH2OCAN(ITAR,IHOUR)*1E-3,GSCAN(ITAR,IHOUR),GBHCAN(ITAR,IHOUR),  &
                                     FHEAT(ITAR,IHOUR)*1E-3,TCAN(ITAR,IHOUR),                    &
+                                    10E-03*ECANMAX(ITAR,IHOUR),ACANMAX(ITAR,IHOUR),                    &
                                     PSILCAN(ITAR,IHOUR),PSILCANMIN(ITAR,IHOUR),CICAN(ITAR,IHOUR),  &
                                     TAIR(IHOUR),VPD(IHOUR)/1000,PAR(IHOUR)
                 500 FORMAT (I7,1X,3(I4,1X),3(F12.5,1X),15(F12.5,1X))
@@ -1944,7 +1951,8 @@ SUBROUTINE OUTPUTHR(IDAY,IHOUR,NOTARGETS,ITARGETS,ISPECIES,         &
                                 FH2OT(ITAR,IHOUR)*1e-3,                                     &
                                 FH2OCAN(ITAR,IHOUR)*1E-3,GSCAN(ITAR,IHOUR),GBHCAN(ITAR,IHOUR),        &
                                 FHEAT(ITAR,IHOUR)*1E-3,TCAN(ITAR,IHOUR),                    &
-                                PSILCAN(ITAR,IHOUR),PSILCAN(ITAR,IHOUR),CICAN(ITAR,IHOUR),  &
+                                10E-03*ECANMAX(ITAR,IHOUR),ACANMAX(ITAR,IHOUR),                    &
+                                PSILCAN(ITAR,IHOUR),PSILCANMIN(ITAR,IHOUR),CICAN(ITAR,IHOUR),  &
                                 TAIR(IHOUR),VPD(IHOUR)/1000,PAR(IHOUR)
             END IF                        
         END DO
