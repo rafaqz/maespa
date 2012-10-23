@@ -366,7 +366,7 @@ SUBROUTINE write_header_information(NSPECIES,SPECIESNAMES, &
             WRITE (UHRLY,714)
             WRITE (UHRLY,715)
             WRITE (UHRLY,716)
-            WRITE (UHRLY,717)
+!            WRITE (UHRLY,717)
             WRITE (UHRLY,718)
             WRITE (UHRLY,719)
             WRITE (UHRLY,720)
@@ -559,7 +559,7 @@ SUBROUTINE write_header_information(NSPECIES,SPECIESNAMES, &
             WRITE (UHRLYHDR,714)
             WRITE (UHRLYHDR,715)
             WRITE (UHRLYHDR,716)
-            WRITE (UHRLYHDR,717)
+            !WRITE (UHRLYHDR,717)
             WRITE (UHRLYHDR,718)
             WRITE (UHRLYHDR,719)
             WRITE (UHRLYHDR,720)
@@ -729,7 +729,7 @@ SUBROUTINE write_header_information(NSPECIES,SPECIESNAMES, &
     724 FORMAT('PAR: Above-canopy incident PAR (umol m-2 s-1)')
     725 FORMAT('Columns: DOY Tree Spec HOUR hrPAR hrNIR hrTHM', &
                ' hrPs hrRf hrRmW hrLE', &
-               ' LECAN Gscan Gbhcan hrH TCAN PSIL PSILMIN CI TAIR VPD PAR')
+               ' LECAN Gscan Gbhcan hrH TCAN ALMAX PSIL PSILMIN CI TAIR VPD PAR')   !10E-3*ECANMAX(ITAR,IHOUR),
 
     801 FORMAT(' Fluxes for each layer on an hourly basis')
     802 FORMAT(' Rows: absorbed PAR (umol m-2 leaf s-1) ')
@@ -1939,10 +1939,10 @@ SUBROUTINE OUTPUTHR(IDAY,IHOUR,NOTARGETS,ITARGETS,ISPECIES,         &
                                     FH2OT(ITAR,IHOUR)*1e-3,                                     &
                                     FH2OCAN(ITAR,IHOUR)*1E-3,GSCAN(ITAR,IHOUR),GBHCAN(ITAR,IHOUR),  &
                                     FHEAT(ITAR,IHOUR)*1E-3,TCAN(ITAR,IHOUR),                    &
-                                    10E-03*ECANMAX(ITAR,IHOUR),ACANMAX(ITAR,IHOUR),                    &
+                                    ACANMAX(ITAR,IHOUR),                    &    !10E-3*ECANMAX(ITAR,IHOUR),
                                     PSILCAN(ITAR,IHOUR),PSILCANMIN(ITAR,IHOUR),CICAN(ITAR,IHOUR),  &
                                     TAIR(IHOUR),VPD(IHOUR)/1000,PAR(IHOUR)
-                500 FORMAT (I7,1X,3(I4,1X),3(F12.5,1X),15(F12.5,1X))
+                500 FORMAT (I7,1X,3(I4,1X),3(F12.5,1X),16(F12.5,1X))
             ELSE IF (IOFORMAT .EQ. 1) THEN
                 WRITE (UHRLY) REAL(IDAY),REAL(ITREE),REAL(ISPEC),REAL(IHOUR),               &
                                 THRAB(ITAR,IHOUR,1)*UMOLPERJ,THRAB(ITAR,IHOUR,2),           &
@@ -1951,7 +1951,7 @@ SUBROUTINE OUTPUTHR(IDAY,IHOUR,NOTARGETS,ITARGETS,ISPECIES,         &
                                 FH2OT(ITAR,IHOUR)*1e-3,                                     &
                                 FH2OCAN(ITAR,IHOUR)*1E-3,GSCAN(ITAR,IHOUR),GBHCAN(ITAR,IHOUR),        &
                                 FHEAT(ITAR,IHOUR)*1E-3,TCAN(ITAR,IHOUR),                    &
-                                10E-03*ECANMAX(ITAR,IHOUR),ACANMAX(ITAR,IHOUR),                    &
+                                ACANMAX(ITAR,IHOUR),                    &   !10E-3*ECANMAX(ITAR,IHOUR),
                                 PSILCAN(ITAR,IHOUR),PSILCANMIN(ITAR,IHOUR),CICAN(ITAR,IHOUR),  &
                                 TAIR(IHOUR),VPD(IHOUR)/1000,PAR(IHOUR)
             END IF                        
