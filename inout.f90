@@ -719,7 +719,7 @@ SUBROUTINE write_header_information(NSPECIES,SPECIESNAMES, &
     714 FORMAT('Gbhcan: canopy boundary layer conductance to heat : mol tree-1 s-1')
     715 FORMAT('hrH:   hourly sensible heat flux:  MJ tree-1 s-1')
     716 FORMAT('TCAN: Average foliage temperature (deg C)')
-    717 FORMAT('ELMAX: Canopy maximum leaf transpiration rate (mmol m-2 s-1)')
+   ! 717 FORMAT('ELMAX: Canopy maximum leaf transpiration rate (mmol m-2 s-1)')
     718 FORMAT('ALMAX: Canopy maximum leaf photosynthesis rate (umol m-2 s-1)')
     719 FORMAT('PSIL: Canopy average leaf water potential (MPa)')
     720 FORMAT('PSILMIN: Canopy minimum leaf water potential (MPa)')
