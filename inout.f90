@@ -1000,7 +1000,7 @@ SUBROUTINE INPUTWATBAL(BPAR, PSIE, KSAT, ROOTRESIST, ROOTRESFRAC,   &
     ! Fill LAYTHICK; needed for root calculations.
     CALL FILLWITHLAST(LAYTHICK, MAXSOILLAY, NLAYER, -900.0)
     CALL READROOTPARS(UWATPARS, ROOTRESFRAC, ROOTRAD,ROOTDENS,ROOTMASSTOT, NROOTLAYER,FRACROOT, &
-        LAYTHICK)
+        LAYTHICK,ROOTBETA)
 
     CALL READPLANTPARS(UWATPARS,MINROOTWP,MINLEAFWP,PLANTK, KSCALING)
 
@@ -1239,7 +1239,7 @@ END SUBROUTINE READPLANTPARS
 !**********************************************************************
 SUBROUTINE READROOTPARS(UFILE, ROOTRESFRACI,ROOTRADI,ROOTDENSI, &
                          ROOTMASSTOTI, NROOTLAYERI,FRACROOTI, &
-                         LAYTHICK)
+                         LAYTHICK,ROOTBETA)
 !**********************************************************************
 
     USE maestcom

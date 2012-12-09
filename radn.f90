@@ -1610,7 +1610,7 @@ END SUBROUTINE EXDIFF
 ! Initial thickness of canopy layer
 ! Norman (1979) says this should be always < 0.5 and preferably closer to 0.1.
 ! Here for LAI < 5, we try DLAI = 0.1
-      DLAI = (IFIX(TOTLAI/5.0)+1)*0.1
+      DLAI = REAL(IFIX(TOTLAI/5.0)+1)*0.1
 
 ! Calculate transmittance through one elementary layer with thickness DLAI
 10    KK = 0            ! Initialise variable used to calculate NLAY
