@@ -806,22 +806,25 @@ END SUBROUTINE INITWATBAL
                 IF(ICEPROP(I).GT.0.)ESTEVAP(I)=0.
         ENDDO
 
-    
+        ! sum of EMAX for each layer
+        TOTESTEVAP = SUM(ESTEVAP(1:NROOTLAYER))  
+  
+        ! Soil water potential was weighted by ESTEVAP.
+        IF(TOTESTEVAP.GT.0.)THEN
+            WEIGHTEDSWP = WEIGHTEDSWP / TOTESTEVAP
+        ELSE
+            WEIGHTEDSWP = SUM(SOILWP(1:NROOTLAYER)) / NROOTLAYER
+        ENDIF
+
+
         ! Option 1 (not currently used) : SPA method to figure out relative water uptake.
         ! Fraction uptake in each layer by Emax in each layer (SPA)
-        IF(SUM(ESTEVAP(1:NROOTLAYER)).EQ.0.0)THEN
+        IF(TOTESTEVAAP.EQ.0.0)THEN
             FRACUPTAKE = 0.0
         ELSE
             DO I=1,NROOTLAYER
                 FRACUPTAKE(I) = ESTEVAP(I)/SUM(ESTEVAP(1:NROOTLAYER))
             ENDDO
-        ENDIF
-
-        ! Soil water potential is weighted by ESTEVAP.
-        IF(TOTESTEVAP.GT.0.)THEN
-            WEIGHTEDSWP = WEIGHTEDSWP / SUM(ESTEVAP(1:NROOTLAYER))
-        ELSE
-            WEIGHTEDSWP = SUM(SOILWP(1:NROOTLAYER)) / NROOTLAYER
         ENDIF
 
         ! Resistances are in parallel. This varibale is also not used.
