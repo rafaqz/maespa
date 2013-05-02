@@ -10,6 +10,7 @@ SUBROUTINE default_conditions(in_path, out_path)
     IODAILY = 1  ! Controls daily output: FIXED HERE 
     IOWATBAL = 1 ! Controls water balance output
     IOFORMAT = 0 ! Dump mode...
+    ISUNLA = 0 ! Mathias 27/11/12
     
     ! current working directory
     in_path = ''

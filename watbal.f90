@@ -126,15 +126,15 @@ SUBROUTINE INITWATBAL(LAYTHICK,WETTINGBOT,WETTINGTOP, &
                         ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR, &
                         ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR, &
                         ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR, &
-                        ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR
+                        ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR
     ELSE IF (IOFORMAT .EQ. 0) THEN
         WRITE (UWATBAL,520)IZEROVAR,IZEROVAR,WSOIL,ZEROVAR,ZEROVAR, &
                         ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR, &
                         ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR, &
                         ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR, &
                         ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR, &
-                        ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR
-            520   FORMAT (I7,I7,50(F14.4,1X))
+                        ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR,ZEROVAR
+            520   FORMAT (I7,I7,51(F14.4,1X))
     END IF            
     RETURN
 END SUBROUTINE INITWATBAL
@@ -151,7 +151,7 @@ END SUBROUTINE INITWATBAL
                             ROOTRESFRAC, &
                             ROOTRAD,MINROOTWP,TOTLAI, &
                             WIND, ZHT, Z0HT, GAMSOIL, &
-                            WEIGHTEDSWP,FRACUPTAKE,TOTSOILRES)
+                            WEIGHTEDSWP,FRACUPTAKE,TOTSOILRES,ALPHARET,WS,WR,NRET) 
 
 ! Calculates soil water potential, hydraulic conductivity,
 ! soil-to-root hydraulic conductance (leaf specific), thermal
@@ -167,6 +167,7 @@ END SUBROUTINE INITWATBAL
       INTEGER I, NLAYER, NROOTLAYER, EQUALUPTAKE, RETFUNCTION, SOILDATA
       INTEGER USEMEASSW
       REAL BPAR(MAXSOILLAY),PSIE(MAXSOILLAY),KSAT(MAXSOILLAY)
+      REAL ALPHARET(MAXSOILLAY),WS(MAXSOILLAY),WR(MAXSOILLAY),NRET(MAXSOILLAY)
       REAL SOILWP(MAXSOILLAY),FRACWATER(MAXSOILLAY),POREFRAC(MAXSOILLAY)
       REAL SOILCOND(MAXSOILLAY),ROOTMASS(MAXSOILLAY),ROOTLEN(MAXSOILLAY)
       REAL LAYTHICK(MAXSOILLAY), ICEPROP(MAXSOILLAY)
@@ -186,14 +187,15 @@ END SUBROUTINE INITWATBAL
 ! soil to root conductance for each soil layer.
       DO I=1,NLAYER
           SOILWP(I) = SOILWPFUN(FRACWATER(I),PSIE(I),BPAR(I), &
-             POREFRAC(I),RETFUNCTION)
+             POREFRAC(I),ALPHARET(I),WS(I),WR(I),NRET(I),RETFUNCTION)
           SOILCOND(I) = SOILCONDFUN(FRACWATER(I),KSAT(I), &
-             BPAR(I),POREFRAC(I))
+             BPAR(I),POREFRAC(I),WS(I),WR(I),NRET(I),RETFUNCTION)
           THERMCOND(I) = THERMCONDFUN(I, SOILWP(I), FRACWATER(I), &
                                       POREFRAC(I), BPAR(I), &
-                                      FRACORGANIC(I))
-      ENDDO
+                                      FRACORGANIC(I),RETFUNCTION)
 
+      ENDDO
+      
 ! Calculate soil conductivity and soil-to-root resistance if using measured soil water content.
       IF(USEMEASSW.EQ.1)THEN
 
@@ -218,9 +220,8 @@ END SUBROUTINE INITWATBAL
                             ICEPROP,EQUALUPTAKE, &
                             USEMEASSW, SOILDATA, SOILMOISTURE, &
                             ROOTLEN,NROOTLAYER,WEIGHTEDSWP, &
-                            FRACUPTAKE,TOTSOILRES)
-
-
+                            FRACUPTAKE,TOTSOILRES,LAYTHICK) ! rajout LAYTHICK mathias décembre 2012
+      
 ! Aerodynamic conductance between soil surface and air,
 ! assuming turbulent transfer (so that conductance is the same for
 ! momentum, heat and mass transfer (Jones 1992)).
@@ -246,7 +247,7 @@ END SUBROUTINE INITWATBAL
                               KSAT,BPAR,WSOIL,WSOILROOT,DISCHARGE, &
                               DRYTHICKMIN,DRYTHICK,QEMM,OVERFLOW, &
                               WATERGAIN,WATERLOSS,PPTGAIN,KEEPWET, &
-                              EXPINF)
+                              EXPINF,WS,WR,NRET,RETFUNCTION)
 
 ! Do water balance for layered soil.
 ! Replaces subroutines WATERFLUXES and WATERTHERMAL in SPA
@@ -259,6 +260,7 @@ END SUBROUTINE INITWATBAL
     IMPLICIT NONE
         INTEGER I,J,RR,NLAYER,NROOTLAYER,USEMEASET,IDAY,IHOUR
         INTEGER KEEPWET
+        INTEGER RETFUNCTION
         REAL POREFRAC(MAXSOILLAY),WETTINGBOT(10),WETTINGTOP(10)
         REAL LAYTHICK(MAXSOILLAY)
         REAL WATERGAIN(MAXSOILLAY),WATERLOSS(MAXSOILLAY)
@@ -274,7 +276,8 @@ END SUBROUTINE INITWATBAL
         REAL DRYTHICK,ETLOSS,ETMEAS,ETMM,DISCHARGE,EXPINF,OVERFLOW
         REAL WATERCONTENT,ICECONTENT
         REAL, EXTERNAL :: HEATEVAP
-
+        REAL WS(MAXSOILLAY),WR(MAXSOILLAY),NRET(MAXSOILLAY)
+        
 !       Conversions
         SOILTC = SOILTK - FREEZE
         TAIRC = TAIRK - FREEZE
@@ -343,7 +346,7 @@ END SUBROUTINE INITWATBAL
             ETLOSS = ETMM / 1000
         ENDIF
 
-!       Water loss from each rooted layer (i.e. root water uptake)
+!       Water loss from each rooted layer (i.e. *root water uptake)
         DO I=1,NROOTLAYER
             WATERLOSS(I) = WATERLOSS(I) + ETLOSS*FRACUPTAKE(I)
         ENDDO
@@ -352,9 +355,9 @@ END SUBROUTINE INITWATBAL
         DO J = 1,NLAYER
         CALL SOIL_BALANCE(J, POREFRAC, ICEPROP, FRACWATER, &
                           LAYTHICK, DRAINLIMIT(J), WATERLOSS, WATERGAIN, &
-                          KSAT(J), BPAR(J))
+                          KSAT(J), BPAR(J),WS(J),WR(J),NRET(J),RETFUNCTION)
         ENDDO
-
+        
 ! Loss of water at lowest soil layer (discharge, or deep drainage) (mm).
         DISCHARGE = 1000 * WATERGAIN(NLAYER + 1)
 
@@ -366,7 +369,7 @@ END SUBROUTINE INITWATBAL
         CALL INFILTRATE(SURFACE_WATERMM,NLAYER,POREFRAC,FRACWATER, &
                         LAYTHICK,WATERGAIN,WATERLOSS, &
                         EXPINF,PPTGAIN,OVERFLOW)
-
+        
 !       Add and subtract gains and losses for each layer
         DO J = 1,NLAYER
 
@@ -602,11 +605,12 @@ END SUBROUTINE INITWATBAL
 
 !**********************************************************************
       REAL FUNCTION SOILWPFUN(WATERCONTENT,PSIE,BPAR, &
-                              POROSITY,RETFUNCTION)
+                              POROSITY,ALPHARET,WS,WR,NRET,RETFUNCTION)
 
 ! Soil water potential (MPa), using the Campbell (1974) equation.
 ! PSIE (MPa),BPAR(-),POROSITY(m3 m-3),WATERCONTENT (m3 m-3)
 ! Output in MPa
+! Or using van Genutchen (1980) equation, alpha (MPa-1),WS and WR (m3 m-3)
 ! RAD, April 2008.
 !**********************************************************************
 
@@ -614,31 +618,49 @@ END SUBROUTINE INITWATBAL
       IMPLICIT NONE
       INTEGER RETFUNCTION,IOFATAL
       REAL WATERCONTENT,PSIE,BPAR,POROSITY
-
+      REAL ALPHARET,WS,WR,NRET
+      
       SOILWPFUN = 1.0  ! INIT WITH WRONG VALUE.
 
+    IF(WATERCONTENT.EQ.0.) THEN
+      SOILWPFUN = -999.0           ! bug mathias décembre 2012 pour éviter valeure -Infinity qui crée NA dans WEIGHTEDSMP
+    ELSE 
       IF(RETFUNCTION.EQ.1)THEN
         SOILWPFUN = PSIE*(WATERCONTENT/POROSITY)**(-BPAR)
       ENDIF
       IF(RETFUNCTION.EQ.2)THEN
         SOILWPFUN = PSIE*(WATERCONTENT)**(-BPAR)
       ENDIF
-
+      IF(RETFUNCTION.EQ.3) THEN
+          IF(WATERCONTENT.LT.WR)THEN
+              SOILWPFUN = -999.0
+          ELSE IF (WATERCONTENT.GT.WS) THEN
+              SOILWPFUN = -0.0001
+          ELSE
+              SOILWPFUN = - 1/ALPHARET * (((WS-WR)/(WATERCONTENT-WR))**(NRET/(NRET-1)) - 1)**(1/NRET) 
+          END IF
+      END IF   
+    ENDIF
+      
       IF(SOILWPFUN.GT.0) THEN
         SOILWPFUN = 0.0
         CALL SUBERROR('ERROR IN SOIL WATER POTENTIAL CALCULATION', &
            IOFATAL,0)
       ENDIF
 
+    IF(SOILWPFUN.LT.-999) THEN      ! modification mathias decembre 2012 pour eviter bug
+        SOILWPFUN = -999.0
+    ENDIF
+      
       RETURN
       END ! SOILWPFUN
 
 
 !**********************************************************************
 
-      REAL FUNCTION SOILCONDFUN(WATERCONTENT,KSAT,BPAR,POROSITY)
+      REAL FUNCTION SOILCONDFUN(WATERCONTENT,KSAT,BPAR,POROSITY,WS,WR,N,RETFUNCTION)
 
-! Soil hydraulic conductivity, using the Campbell (1974) equation.
+! Soil hydraulic conductivity, using the Campbell (1974) equation. or the van Genutchen equation
 ! Inputs:
 ! KSAT (ms-1),BPAR(-),POROSITY(m3 m-3),WATERCONTENT (m3 m-3)
 ! Output in m s-1
@@ -647,11 +669,26 @@ END SUBROUTINE INITWATBAL
 
       USE maestcom
       IMPLICIT NONE
+      INTEGER RETFUNCTION
       REAL KSAT,WATERCONTENT,BPAR,POROSITY
+      REAL WS,WR,N,ALPHAPOT
 
-! Campbell 1974
-      SOILCONDFUN = KSAT*(WATERCONTENT/POROSITY)**(2*BPAR + 3)
-
+      IF (RETFUNCTION.EQ.1.OR.RETFUNCTION.EQ.2) THEN
+        ! Campbell 1974
+          SOILCONDFUN = KSAT*(WATERCONTENT/POROSITY)**(2*BPAR + 3)
+      ELSE IF (RETFUNCTION.EQ.3) THEN
+        ! van genuchten
+          IF (WATERCONTENT.LT.WR) THEN
+              SOILCONDFUN = 0
+          ELSE IF (WATERCONTENT.GT.WS) THEN
+              SOILCONDFUN = KSAT
+          ELSE
+              ALPHAPOT = (( (WS - WR)/(WATERCONTENT-WR) )**(N/(N-1)) - 1) ** (1/N)
+              SOILCONDFUN = KSAT * (1 - ALPHAPOT**(N-1) * ( 1+ ALPHAPOT**N )**(-1+1/N) ) **2   &
+                            / (1 + ALPHAPOT**N)**(1/2 - 1/(2*N))
+           END IF
+      END IF    
+            
 ! Avoid underflow (avoiding very small numbers).
       IF(SOILCONDFUN.LT.1E-30) SOILCONDFUN = 1E-30
 
@@ -723,7 +760,7 @@ END SUBROUTINE INITWATBAL
 
           ! Soil hydraulic conductivity
           LSOIL = SOILCOND(I)/MPAM   !converts from ms-1 to m2 s-1 MPa-1
-
+                        
         IF(LSOIL.LT.1E-35)THEN      !prevent floating point error
                 SOILRRES(I) = 1e35
         ELSE
@@ -738,7 +775,7 @@ END SUBROUTINE INITWATBAL
                 SOILR2(I) = ROOTRESCONS * DEPTH / ROOTLEN(I)
 
                 SOILRRES(I) = SOILR1(I) + SOILR2(I)
-      ENDIF
+        ENDIF
 
       ENDDO
 
@@ -754,7 +791,7 @@ END SUBROUTINE INITWATBAL
                                   ICEPROP,EQUALUPTAKE, &
                                   USEMEASSW, SOILDATA, SOILMOISTURE, &
                                   ROOTLEN,NROOTLAYER,WEIGHTEDSWP, &
-                                  FRACUPTAKE,TOTSOILRES)
+                                  FRACUPTAKE,TOTSOILRES,LAYTHICK) ! rajout laythick mathias décembre 2012
 
 ! Function for deciding from which layer water is withdrawn,
 ! and to calculate soil water potential weighted by root fraction.
@@ -768,7 +805,7 @@ END SUBROUTINE INITWATBAL
         INTEGER I,NROOTLAYER,EQUALUPTAKE,SOILDATA,USEMEASSW
         INTEGER TMP1,TMP2
         REAL ESTEVAP(MAXSOILLAY),FRACUPTAKE(MAXSOILLAY)
-        REAL FRACUPTAKE2(MAXSOILLAY)
+        REAL FRACUPTAKE2(MAXSOILLAY), LAYTHICK(MAXSOILLAY)  ! rajout laythick mathias décembre 2012 modification
         REAL ICEPROP(MAXSOILLAY), SOILWP(MAXSOILLAY)
         REAL SOILRRES1(MAXSOILLAY),SOILRRES2(MAXSOILLAY)
         REAL SOILRRES(MAXSOILLAY),RESTOT(MAXSOILLAY)
@@ -805,21 +842,11 @@ END SUBROUTINE INITWATBAL
                 ! No uptake from frozen soils
                 IF(ICEPROP(I).GT.0.)ESTEVAP(I)=0.
         ENDDO
-
-        ! sum of EMAX for each layer
-        TOTESTEVAP = SUM(ESTEVAP(1:NROOTLAYER))  
-  
-        ! Soil water potential was weighted by ESTEVAP.
-        IF(TOTESTEVAP.GT.0.)THEN
-            WEIGHTEDSWP = WEIGHTEDSWP / TOTESTEVAP
-        ELSE
-            WEIGHTEDSWP = SUM(SOILWP(1:NROOTLAYER)) / NROOTLAYER
-        ENDIF
-
-
+    
+    
         ! Option 1 (not currently used) : SPA method to figure out relative water uptake.
         ! Fraction uptake in each layer by Emax in each layer (SPA)
-        IF(TOTESTEVAAP.EQ.0.0)THEN
+        IF(SUM(ESTEVAP(1:NROOTLAYER)).EQ.0.0)THEN
             FRACUPTAKE = 0.0
         ELSE
             DO I=1,NROOTLAYER
@@ -827,9 +854,25 @@ END SUBROUTINE INITWATBAL
             ENDDO
         ENDIF
 
+        ! sum of EMAX for each layer
+        TOTESTEVAP = SUM(ESTEVAP(1:NROOTLAYER))  ! modification mathias décembre 2012
+
+        ! Soil water potential is weighted by ESTEVAP.
+        IF(TOTESTEVAP.GT.0.)THEN
+            WEIGHTEDSWP = WEIGHTEDSWP / TOTESTEVAP       
+        ELSE
+            !WEIGHTEDSWP = SUM(SOILWP(1:NROOTLAYER)) / NROOTLAYER
+            WEIGHTEDSWP =0
+            DO I=1,NROOTLAYER
+                WEIGHTEDSWP = WEIGHTEDSWP + SOILWP(I) * LAYTHICK(I)    ! modification mathias décembre 2012
+            ENDDO
+            WEIGHTEDSWP = WEIGHTEDSWP / sum(LAYTHICK(1:NROOTLAYER))
+        
+        ENDIF        
+
         ! Resistances are in parallel. This varibale is also not used.
         TOTSOILRES = 1/SUM(1/SOILRRES(1:NROOTLAYER))
-
+        
         ENDIF
 
         ! Debugging option; equal uptake in all layers.
@@ -1269,7 +1312,7 @@ END SUBROUTINE INITWATBAL
         SUBROUTINE SOIL_BALANCE(J, POREFRAC,ICEPROP,FRACWATER, &
                                 LAYTHICK, &
                                 DRAINLIMIT, WATERLOSS, WATERGAIN, &
-                                KSAT, BPAR)
+                                KSAT, BPAR,WS,WR,NRET,RETFUNCTION)
 
 ! Integrator for soil gravitational drainage.
 ! J is the current soil layer.
@@ -1280,8 +1323,10 @@ END SUBROUTINE INITWATBAL
         IMPLICIT NONE
         INTEGER NVAR,J
         INTEGER KMAX,KOUNT,NBAD,NOK
+        INTEGER RETFUNCTION
         REAL DXSAV,EPS,H1,HMIN,X(KMAXX),Y(NMAX,KMAXX),X1,X2
         REAL YSTART(1),KSAT,BPAR,LIQUID,UNSAT,NEWWF,CHANGE
+        REAL WS,WR,NRET
         REAL POREFRAC(MAXSOILLAY),ICEPROP(MAXSOILLAY)
         REAL LAYTHICK(MAXSOILLAY)
         REAL FRACWATER(MAXSOILLAY)
@@ -1303,7 +1348,7 @@ END SUBROUTINE INITWATBAL
         HMIN=0.0
         KMAX=100
         X1=1.
-        X2=2.
+            X2=2.
         DXSAV=(X2-X1)/20.0
 
         ! Liquid fraction
@@ -1320,6 +1365,10 @@ END SUBROUTINE INITWATBAL
         EXTRAPARS(4) = DRAINLIMIT
         EXTRAPARS(5) = LIQUID
         EXTRAPARS(6) = UNSAT
+        EXTRAPARS(7) = WS
+        EXTRAPARS(8) = WR
+        EXTRAPARS(9) = NRET 
+        EXTRAPARS(10)= RETFUNCTION
 
         ! If there is liquid water, integrate the drainage routine.
         IF((LIQUID.GT.0.).AND.(FRACWATER(J).GT. &
@@ -1332,7 +1381,6 @@ END SUBROUTINE INITWATBAL
                 ! and an array of parameters EXTRAPARS)
                 CALL ODEINT(YSTART,NVAR,X1,X2,EPS,H1,HMIN,NOK, &
                             NBAD,SOILSTOR,EXTRAPARS)
-
                 !Solution of odeint ('new water fraction')
                 NEWWF = YSTART(1)
 
@@ -1356,12 +1404,12 @@ END SUBROUTINE INITWATBAL
 
         USE maestcom
         IMPLICIT NONE
-        INTEGER I
+        INTEGER I, RETFUNCTION
         REAL DYDT(NMAX),Y(NMAX)
         REAL TIME
         REAL DRAINAGE,KSAT,LIQUID,KSOIL
         REAL EXTRAPARS(EXTRAPARDIM)
-        REAL BPAR,SOILPOR,DRAINLIMIT,UNSAT
+        REAL BPAR,SOILPOR,DRAINLIMIT,UNSAT,WS,WR,NRET
         REAL, EXTERNAL :: SOILCONDFUN
 
         ! Extra parameters in an array:
@@ -1371,9 +1419,13 @@ END SUBROUTINE INITWATBAL
         DRAINLIMIT = EXTRAPARS(4)
         LIQUID = EXTRAPARS(5)
         UNSAT = EXTRAPARS(6)
+        WS = EXTRAPARS(7)
+        WR=EXTRAPARS(8)
+        NRET=EXTRAPARS(9)
+        RETFUNCTION = EXTRAPARS(10)
 
         ! Soil hydraulic conductivity and drainage.
-        KSOIL = SOILCONDFUN(Y(1),KSAT,BPAR,SOILPOR)
+        KSOIL = SOILCONDFUN(Y(1),KSAT,BPAR,SOILPOR,WS,WR,NRET,RETFUNCTION)
         DRAINAGE = KSOIL*SPERHR
 
         ! Gravitational drainage above a given percentage of porosity.
@@ -1432,11 +1484,19 @@ END SUBROUTINE INITWATBAL
         ! Calculates fraction of surface water (i.e. rainfall) going int
         SOILDEPTH = SUM(LAYTHICK(1:NLAYER))
         FRACIN(1) = ( LAYTHICK(1) / SOILDEPTH ) ** EXPINF
+
+!        FRACIN(1) = 0.3
+!        FRACIN(2) = 0.2
+!        FRACIN(3) = 0.2
+!        FRACIN(4) = 0.2
+!        FRACIN(5) = 0.1
+        
         DO I=2,NLAYER
            FRACIN(I) = ( SUM(LAYTHICK(1:I)) / SOILDEPTH ) ** EXPINF - &
                        ( SUM(LAYTHICK(1:(I-1))) / SOILDEPTH) ** EXPINF
         ENDDO
 
+        
         ! Error check:
         CHECKSUM = SUM(FRACIN(1:NLAYER))
         IF(ABS(CHECKSUM - 1.0).GT.1E-06)WRITE(*,*) &
@@ -1468,6 +1528,7 @@ END SUBROUTINE INITWATBAL
 
         ENDDO
 
+        
         ! There may still be water left over; soil is saturated.
         OVERFLOW = WLEFTOVER
 
@@ -1609,13 +1670,14 @@ END SUBROUTINE INITWATBAL
 !**********************************************************************
 
         REAL FUNCTION THERMCONDFUN(I, SOILWP, FRACWATER, &
-                                   POREFRAC, BPAR, FRACORGANIC)
+                                   POREFRAC, BPAR, FRACORGANIC,RETFUNCTION)
 
 ! (Differs from SPA - RAD June 2008).
 !**********************************************************************
 
         USE maestcom
         IMPLICIT NONE
+        INTEGER RETFUNCTION
         REAL KE,ALPHA,BPAR,DRYLAMBDA,POREFRAC,TCSOLID
         REAL FRACORGANIC,WETLAMBDA,SR,FRACWATER,SOILWP
         INTEGER I
@@ -1640,6 +1702,9 @@ END SUBROUTINE INITWATBAL
 ! on an earlier model by Johansson (1975). See also Peters-Lidard et al. 1998 (J.
 ! Atm. Sci.) for support of the Johansson model.
 
+    IF (RETFUNCTION.EQ.3) THEN
+        ALPHA = 0.96  ! waiting more information
+    ELSE
 ! The alpha parameter is different for coarse and fine soils. I have set the cutoff
 ! to 5.3 for the b parameter, based on their Table 1 and Figure 2.
         IF(BPAR.LT.5.3)THEN
@@ -1647,7 +1712,8 @@ END SUBROUTINE INITWATBAL
         ELSE
             ALPHA = 0.27
         ENDIF
-
+    END IF
+    
 ! Saturated and dry thermal conductivities:
         DRYLAMBDA = -0.56 * POREFRAC + 0.51
 
@@ -1722,6 +1788,9 @@ END SUBROUTINE INITWATBAL
     REAL ETMM, WIND, ZHT,Z0HT,ZPD,PRESS,TAIR,VPD,ETCAN
     REAL ETUSMM,FH2OUS,WTOT
     
+!    print*,ihour, radinterc
+!    pause
+
 ! Get average leaf area of target trees
       TOTLATAR = 0.0
       DO I = 1,NOTARGETS
@@ -1744,7 +1813,7 @@ END SUBROUTINE INITWATBAL
       ELSE
           EXPFACTORS(1:NOTARGETS) = 1.0
       ENDIF
-
+            
 ! Get total radiation above and under the canopy.
 
       CALL GETRGLOB(IHOUR,SCLOSTTREE,THRAB,RADABV, &
@@ -1753,7 +1822,7 @@ END SUBROUTINE INITWATBAL
                       DOWNTHTREE,EXPFACTORS, &
                       RGLOBABV,RGLOBABV12,RGLOBUND,RADINTERC12, &
                       RADINTERC1,RADINTERC2,RADINTERC3, &
-                      SCLOSTTOT,FRACAPAR)
+                      SCLOSTTOT,FRACAPAR,RADINTERC)
                            
 ! Get average canopy conductance across target trees:
       GSCANAV = 0.
@@ -1785,7 +1854,8 @@ END SUBROUTINE INITWATBAL
             PRESS,TAIR, &
             RADINTERCTREE,   &
             VPD,GSCANAV,STOCKING) * CONV
-
+        
+        
 ! Add understorey ET to ETMM, if simulated:
         IF(ISIMUS.EQ.1)THEN
           ETUSMM = FH2OUS * SPERHR * 18 * 1E-06
@@ -1914,3 +1984,5 @@ END SUBROUTINE INITWATBAL
 
       RETURN
       END
+
+
