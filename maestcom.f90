@@ -5,23 +5,23 @@ MODULE maestcom
     CHARACTER(LEN=3), PARAMETER :: format_binary = 'bin'
     
     ! Maximum dimensions of arrays
-    INTEGER, PARAMETER :: MAXT = 2000        ! Maximum no. of trees in plot
+    INTEGER, PARAMETER :: MAXT = 400        ! Maximum no. of trees in plot
     INTEGER, PARAMETER :: MAXLAY = 15         ! Maximum no. of layers for radiation
     INTEGER, PARAMETER :: MAXSOILLAY = 100    ! Maximum no. of layers of soil (RAD)
-    INTEGER, PARAMETER :: MAXSP = 10          ! Maximum no. of species (RAD).
-    INTEGER, PARAMETER :: MAXP = 10000        ! Maximum no. of gridpoints
+    INTEGER, PARAMETER :: MAXSP = 3          ! Maximum no. of species (RAD).
+    INTEGER, PARAMETER :: MAXP = 1000        ! Maximum no. of gridpoints
     INTEGER, PARAMETER :: MAXC = 3            ! Maximum no. of leaf area distributions
-    INTEGER, PARAMETER :: MAXANG = 9          ! Maximum no. of zenith & leaf angles
+    INTEGER, PARAMETER :: MAXANG = 20          ! Maximum no. of zenith & leaf angles
     INTEGER, PARAMETER :: MAXD = 13           ! For resp prog
-    INTEGER, PARAMETER :: MAXDATE = 400      ! Maximum no. of dates for tree or physiol parameters
+    INTEGER, PARAMETER :: MAXDATE = 12      ! Maximum no. of dates for tree or physiol parameters
     !INTEGER, PARAMETER :: maxdate = 5        ! Maximum no. of dates for physiol parameters
     !INTEGER, PARAMETER :: MAXMET = 18         ! Maximum columns in met data file
     ! changed by mgdk, just to try and compile, not 18 but MHET has 20?!!
     INTEGER, PARAMETER :: MAXMET = 20         ! Maximum columns in met data file
     INTEGER, PARAMETER :: MAXHISTO = 200      ! Maximum bins in PAR histogram
     REAL, PARAMETER    :: TOL = 0.02          ! Tolerance for leaf temp iteration
-    INTEGER, PARAMETER :: MAXDAY = 900        ! For sumtrees program
-    INTEGER, PARAMETER :: MAXHRS = 96         ! Maximum number of time periods in a day (ie 15 mins)
+    INTEGER, PARAMETER :: MAXDAY =   900        ! For sumtrees program
+    INTEGER, PARAMETER :: MAXHRS = 48         ! Maximum number of time periods in a day (ie 15 mins)
     INTEGER, PARAMETER :: MAXSTP = 10000      ! For ODEINT (Utils.for)
     INTEGER, PARAMETER :: NMAX = 4            ! "
     INTEGER, PARAMETER :: KMAXX = 200         ! "
@@ -113,6 +113,8 @@ MODULE maestcom
     INTEGER, PARAMETER :: UWATUPTHDR = 46
     INTEGER, PARAMETER :: UWATDAYHDR = 47
     INTEGER, PARAMETER :: URESPHDR = 48
+    INTEGER, PARAMETER :: USUNLA = 49    ! modification Mathias 27/11/12
+    INTEGER, PARAMETER :: USWPLAY = 50    ! modification Mathias décembre 2012
     
     
 

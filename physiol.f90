@@ -74,10 +74,9 @@ SUBROUTINE PSTRANSPIF(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,
                     Q10F,K10F,RTEMP,DAYRESP,TBELOW,MODELGS,WSOILMETHOD,EMAXLEAF,SOILMOISTURE,    &
                     SMD1,SMD2,WC1,WC2,SOILDATA,SWPEXP,FSOIL,G0,D0L,GAMMA,VPDMIN,G1,GK,WLEAF,NSIDES,   &
                     VPARA,VPARB,VPARC,VFUN,SF,PSIV,ITERMAX,GSC,ALEAF,RD,ET,FHEAT,TLEAF,GBH,PLANTK,TOTSOILRES,MINLEAFWP,  &
-                    WEIGHTEDSWP,HMSHAPE,PSILIN,ETEST)
+                    WEIGHTEDSWP,HMSHAPE,PSILIN,ETEST, IDAY, IHOUR)  ! modification mathias mars iday ihour
     
     ENDIF
-    
     
     CALL PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH,VPD,VMFD,PRESS,JMAX25,&
                     IECO,EAVJ,EDVJ,DELSJ,VCMAX25,EAVC,EDVC,DELSC,TVJUP,TVJDN,THETA,AJQ,RD0, &
@@ -124,6 +123,7 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
     REAL ET,RNET,GBC,TDIFF,TLEAF1,FHEAT,ETEST,SF,PSIV,HMSHAPE
     REAL PSILIN,CI,VPARA,VPARB,VPARC,VPDMIN,GK
     logical failconv
+    CHARACTER*70 errormessage
     
     REAL, EXTERNAL :: SATUR
     REAL, EXTERNAL :: GRADIATION
@@ -134,7 +134,7 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
     failconv = .FALSE.
     
     KTOT = 1./(TOTSOILRES + 1./PLANTK)
-       
+        
     !write(uwattest, *)ktot,plantk
 
     ! Set initial values of leaf temp and surface CO2 & VPD
@@ -189,7 +189,26 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
     GBC = GBH/GBHGBC
     CS = CA - ALEAF/GBC
     TDIFF = (RNET - ET*LHV) / (CPAIR * AIRMA * GH)
-    TLEAF1 = TAIR + TDIFF
+    TLEAF1 = TAIR + TDIFF/4
+    
+    ! on recalcule ET modification mathias avril 2013
+    ! Boundary layer conductance for heat - single sided, free convection
+    GBHF = GBHFREE(TAIR,TLEAF,PRESS,WLEAF)
+    ! Total boundary layer conductance for heat
+    GBH = GBHU + GBHF
+
+    ! Total conductance for heat - two-sided
+    GH = 2.*(GBH + GRADN)
+    ! Total conductance for water vapour
+    GBV = GBVGBH*GBH
+    GSV = GSVGSC*GSC
+    !      GV = NSIDES*(GBV*GSV)/(GBV+GSV) ! already one-sided value
+    GV = (GBV*GSV)/(GBV+GSV)
+
+    !  Call Penman-Monteith equation
+    ET = PENMON(PRESS,SLOPE,LHV,RNET,VPD,GH,GV)
+    ! fin de la modification
+
     DLEAF = ET * PRESS / GV
     RHLEAF = 1. - DLEAF/SATUR(TLEAF1)
     VMLEAF = DLEAF/PRESS*1E-3
@@ -197,9 +216,11 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
     !if(abs(tleaf-tleaf1).gt.5.and.iter.gt.itermax)write(uwattest,*)tleaf,tleaf1
 
     ! Check to see whether convergence achieved or failed
-    IF (ABS(TLEAF - TLEAF1).LT.TOL) GOTO 200
+    IF (ABS(TLEAF - TLEAF1).LT.TOL/4) GOTO 200
+
     IF (ITER.GT.ITERMAX) THEN
-        CALL SUBERROR('FAILED CONVERGENCE IN PSTRANSP',IWARN,0)
+        write(errormessage, '(I4,A,I2,A)') IDAY,'  ', IHOUR, ' FAILED CONVERGENCE IN PSTRANSP'
+        CALL SUBERROR(errormessage,IWARN,0)
         failconv = .TRUE.
 	    GOTO 200
     END IF
@@ -210,6 +231,7 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
     GOTO 100
 
     200   FHEAT = RNET - LHV*ET
+          
     !      FHEAT = (TLEAF - TAIR)*2.*GBH*CPAIR*AIRMA  !BM 12/05 Not correct - use energy bal instead
     ET = ET*1E6  ! Return ET,EI in umol m-2 s-1
 
@@ -293,7 +315,6 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
     ! Deal with extreme cases
     IF ((JMAX.LE.0.0).OR.(VCMAX.LE.0.0)) THEN
         ALEAF = -RD
-        !print*, ALEAF
         
         GS = G0
 
@@ -386,7 +407,7 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
 
             ! Leaf water potential
             PSIL = WEIGHTEDSWP - ETEST/KTOT
-
+    
             IF(ETEST > EMAXLEAF)THEN
 
                 ! Just for output:
@@ -1030,14 +1051,14 @@ SUBROUTINE PSILFIND(RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH,VPD,VMFD,P
                     Q10F,K10F,RTEMP,DAYRESP,TBELOW,MODELGS,WSOILMETHOD,EMAXLEAF,SOILMOISTURE,    &
                     SMD1,SMD2,WC1,WC2,SOILDATA,SWPEXP,FSOIL,G0,D0L,GAMMA,VPDMIN,G1,GK,WLEAF,NSIDES,   &
                     VPARA,VPARB,VPARC,VFUN,SF,PSIV,ITERMAX,GSC,ALEAF,RD,ET,FHEAT,TLEAF,GBH,PLANTK,TOTSOILRES,MINLEAFWP,  &
-                    WEIGHTEDSWP,HMSHAPE,PSILIN,ETEST)
+                    WEIGHTEDSWP,HMSHAPE,PSILIN,ETEST,iday,ihour)
                     
 !**********************************************************************
         USE maestcom
         IMPLICIT NONE
 
         INTEGER MODELGS,SOILDATA,WSOILMETHOD,ITER
-        INTEGER IECO,ITERMAX,NSIDES,VFUN
+        INTEGER IECO,ITERMAX,NSIDES,VFUN,iday,ihour
         REAL JMAX25,I0,LHV,PSIL,K10F
         REAL VPARA,VPARB,VPARC
         REAL MINLEAFWP,TOTSOILRES,PLANTK
@@ -1067,6 +1088,8 @@ SUBROUTINE PSILFIND(RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH,VPD,VMFD,P
         EXTRAINT(4) = NSIDES
         EXTRAINT(5) = ITERMAX
         EXTRAINT(6) = VFUN
+        EXTRAINT(7) = IDAY  !modification
+        EXTRAINT(8) = IHOUR !modification        
 
         EXTRAPARS(1) = RDFIPT
         EXTRAPARS(2) = TUIPT
@@ -1173,7 +1196,9 @@ REAL FUNCTION PSILOBJFUN(PSILIN, EXTRAPARS, EXTRAINT)
           NSIDES = EXTRAINT(4)
           ITERMAX = EXTRAINT(5)
           VFUN = EXTRAINT(6)
-
+          IDAY = EXTRAINT(7)
+          IHOUR = EXTRAINT(8)
+          
           RDFIPT =EXTRAPARS(1)
           TUIPT =EXTRAPARS(2)
           TDIPT =EXTRAPARS(3)
@@ -1230,8 +1255,8 @@ REAL FUNCTION PSILOBJFUN(PSILIN, EXTRAPARS, EXTRAINT)
           VPDMIN = EXTRAPARS(54)
           GK = EXTRAPARS(55)
         
-        iday = -1
-        ihour = -1
+!        iday = -1
+!        ihour = -1
         MINLEAFWP = 0  ! Not used in tuzet.
         CI = 0
         KTOT = 0  ! output, not needed.

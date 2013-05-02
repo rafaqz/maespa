@@ -8,7 +8,7 @@ MODULE switches
     INTEGER :: IODAILY      ! Controls daily output: FIXED HERE 
     INTEGER :: IOWATBAL     ! Controls water balance output
     INTEGER :: IOFORMAT     ! default, write is ascii
-    
+    INTEGER :: ISUNLA  ! Modif Mathias 27/11/12
 
     
 END MODULE switches 
