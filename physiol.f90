@@ -502,6 +502,7 @@ REAL FUNCTION GAMMAFN(TLEAF, IECO)
             GAMMAFN = 36.9 + 1.88*(-26.0) + 0.036*(-26.0)*(-26.0)
         ELSE
             GAMMAFN = 36.9 + 1.88*(TLEAF-25) + 0.036*(TLEAF-25)*(TLEAF-25)
+            
         END IF
     ELSE      ! Bernacchi et al 2001 PCE 24: 253-260
             GAMMAFN = ARRH(42.75,37830.0,TLEAF,25.0)
@@ -536,6 +537,11 @@ REAL FUNCTION KMFN(TLEAF,IECO)
         KOEA = 36380        ! Temp. response of Ko (J mol-1)
     END IF
 
+    
+      ! Km <- exp(38.05-79430/(8.314*(Tleaf+273)))*(1+210/exp(20.3-36380/(8.314*(Tleaf+273))))
+      ! ARRH = KT*EXP(EA*(T-TREF)/(RCONST*(T-ABSZERO)*(TREF-ABSZERO)))
+      ! ARRH(KT,EA,T,TREF)
+    
     ! This function is well-behaved for TLEAF < 0.0
     KC = ARRH(KC25,KCEA,TLEAF,25.0)
     KO = ARRH(KO25,KOEA,TLEAF,25.0)

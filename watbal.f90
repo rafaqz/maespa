@@ -713,7 +713,7 @@ END SUBROUTINE INITWATBAL
       REAL KSAT, SOILWP, PSIE, BPAR
 
 ! Campbell 1974
-      SOILCONDFUN2 = KSAT*(PSIE/SOILWP)**(2+3*BPAR)
+      SOILCONDFUN2 = KSAT*(PSIE/SOILWP)**(2+3/BPAR)
 
 ! Avoid underflow (avoiding very small numbers).
       IF(SOILCONDFUN2.LT.1E-30) SOILCONDFUN2 = 1E-30
@@ -740,7 +740,7 @@ END SUBROUTINE INITWATBAL
       REAL SOILR1(MAXSOILLAY), SOILR2(MAXSOILLAY)
       REAL ROOTRESIST,ROOTRAD,DEPTH
       REAL ROOTRESCONS,RS,RS2,SPAROOTRESIST
-      REAL KSOIL,KS,LOGRR
+      REAL KSOIL,KS,LOGRR,TOTROOT,MEANROOTLEN
       REAL, EXTERNAL :: SOILCONDFUN
 
 ! Hydraulic head for conversion (MPa / m)
@@ -756,50 +756,81 @@ END SUBROUTINE INITWATBAL
       ENDDO
       ROOTRESCONS = ROOTRESIST / LA
 
-      DO I=1,NROOTLAYER
+       DO I=1,NROOTLAYER
 
-          ! Depth to middle of layer (ca. root path length)
-          DEPTH = SUM(LAYTHICK(1:I)) - LAYTHICK(I)/2
+              ! Depth to middle of layer (ca. root path length)
+              DEPTH = SUM(LAYTHICK(1:I)) - LAYTHICK(I)/2
 
-          ! Soil hydraulic conductivity in m2 s-1 MPa-1
-          LSOIL = SOILCOND(I)/MPAM   !converts from ms-1 to m2 s-1 MPa-1
+              ! Soil hydraulic conductivity in m2 s-1 MPa-1
+              !LSOIL = SOILCOND(I)/MPAM   !converts from ms-1 to m2 s-1 MPa-1
           
-          ! ... in mol m-1 s-1 MPa-1. Note that original KSAT was given in same units. 
-          KSOIL = SOILCOND(I)  / (H2OVW * GRAV * 1E-03)
+              ! ... in mol m-1 s-1 MPa-1. Note that original KSAT was given in same units. 
+              KSOIL = SOILCOND(I)  / (H2OVW * GRAV * 1E-03)
           
-        IF(LSOIL.LT.1E-35)THEN      !prevent floating point error
-                SOILRRES(I) = 1e35
-        ELSE
+            IF(KSOIL.LT.1E-35)THEN      !prevent floating point error
+                    SOILRRES(I) = 1e35
+            ELSE
                 
-                ! Reformulated to match Duursma et al. 2008.
+                    ! Reformulated to match Duursma et al. 2008.
                 
-                ! Radius of soil cylinder around root                
-                RS = SQRT(1./(ROOTLEN(I)*PI))
+                    ! Radius of soil cylinder around root                
+                    RS = SQRT(1./(ROOTLEN(I)*PI))
                 
-                LOGRR = LOG(RS/ROOTRAD)
-                IF(LOGRR.LT.0)CALL SUBERROR( &
-                'Root radius larger than soil-root radius - fine root density too high!', &
-                 IWARN,0)
+                    LOGRR = LOG(RS/ROOTRAD)
+                    IF(LOGRR.LT.0)CALL SUBERROR( &
+                    'Root radius larger than soil-root radius - fine root density too high!', &
+                     IWARN,0)
                 
-                KS = ROOTLEN(I)*LAYTHICK(I)*2.0*pi*KSOIL/LOGRR
+                    KS = ROOTLEN(I)*LAYTHICK(I)*2.0*pi*KSOIL/LOGRR
                 
-                SOILR1(I) = 1/KS
+                    SOILR1(I) = 1/KS
                 
-                ! As in SPA:
-                !RS2 = LOG(RS/ROOTRAD)/(2.0*PI*ROOTLEN(I)*LAYTHICK(I)*LSOIL)
-                ! convert from MPa s m2 m-3 to MPa s m2 mmol-1
-                !SOILR1(I) = RS2*1E-6*18*0.001
+                    ! As in SPA:
+                    !RS2 = LOG(RS/ROOTRAD)/(2.0*PI*ROOTLEN(I)*LAYTHICK(I)*LSOIL)
+                    ! convert from MPa s m2 m-3 to MPa s m2 mmol-1
+                    !SOILR1(I) = RS2*1E-6*18*0.001
 
                 
-                ! Note : this component is calculated but not used (see wateruptakelayer proc). More research needed!
-                ! Second component of below ground resistance related to root hydraulics.
-                SOILR2(I) = ROOTRESCONS * DEPTH / ROOTLEN(I)
+                    ! Note : this component is calculated but not used (see wateruptakelayer proc). More research needed!
+                    ! Second component of below ground resistance related to root hydraulics.
+                    SOILR2(I) = ROOTRESCONS * DEPTH / ROOTLEN(I)
 
-                SOILRRES(I) = SOILR1(I) + SOILR2(I)
-        ENDIF
+                    SOILRRES(I) = SOILR1(I) + SOILR2(I)
+            ENDIF
 
-      ENDDO
+       ENDDO
+      
+       
+      ! When using measured soil water, use water content of top layer,
+      ! but all fine roots to calculate total soil conductance
+      IF(USEMEASSW.EQ.1)THEN
+          
+          KSOIL = SOILCOND(1)  / (H2OVW * GRAV * 1E-03)
+          
+          ! Total average fine root density
+          TOTROOT = 0
+          DO I=1,NROOTLAYER
+              TOTROOT = TOTROOT + ROOTLEN(I)*LAYTHICK(I)
+          ENDDO
+          MEANROOTLEN = TOTROOT / SUM(LAYTHICK(1:NROOTLAYER))
+          
+          ! Average soil cylinder around roots.
+          RS = SQRT(1./(MEANROOTLEN*PI))      
+          LOGRR = LOG(RS/ROOTRAD)
+          
+          ! Total soil conductance
+          KS = TOTROOT*2.0*pi*KSOIL/LOGRR
+          
+          SOILR1(1) = 1/KS
+          
+          SOILR2(1) = ROOTRESCONS * (SUM(LAYTHICK(1:NROOTLAYER))/2) / MEANROOTLEN
 
+          SOILRRES(1) = SOILR1(1) + SOILR2(1)
+      ENDIF
+      
+      
+      
+          
       RETURN
       END !SOILRESCALC
 
