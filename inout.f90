@@ -787,7 +787,7 @@ SUBROUTINE write_header_information(NSPECIES,SPECIESNAMES, &
     411 FORMAT('discharge: drainage at bottom of profile              mm')
     412 FORMAT('overflow: over-land flow                              mm')
     413 FORMAT('weightedswp: soil water potential weighted by roots  MPa')
-    414 FORMAT('totestevap: maximum possible soil water uptake        mm')
+    414 FORMAT('ktot: soil to leaf hydr. cond.        mmol m-2 s-1 MPa-1')
     415 FORMAT('drythick: thickness of dry surface layer              mm')
     416 FORMAT('soilevap: soil evaporation                            mm')
     417 FORMAT('soilmoist: measured soil water content      (units vary)')
@@ -807,7 +807,7 @@ SUBROUTINE write_header_information(NSPECIES,SPECIESNAMES, &
 
     431 FORMAT('Columns: day hour wsoil wsoilroot ppt canopystore         &
                 &evapstore drainstore tfall et etmeas discharge overflow  &
-                &weightedswp totestevap drythick soilevap                 &
+                &weightedswp ktot drythick soilevap                 &
                 &soilmoist fsoil qh qe qn qc rglobund                     &
                 &rglobabv radinterc rnet totlai tair soilt1 soilt2        &
                 &fracw1 fracw2 fracaPAR')
@@ -1298,7 +1298,7 @@ END SUBROUTINE READPLANTPARS
 !**********************************************************************
 SUBROUTINE READROOTPARS(UFILE, ROOTRESFRACI,ROOTRADTABLEI,ROOTDENSTABLEI, &  
                          ROOTMASSTOTTABLEI, NROOTLAYERI,FRACROOTI, &
-                         LAYTHICK,ROOTBETA,DATESROOTI,NOROOTDATES)! rajout rootbeta mathias decembre 2012
+                         LAYTHICK,ROOTBETA,DATESROOTI,NOROOTDATES) ! rajout rootbeta mathias decembre 2012
 !**********************************************************************
 
     USE maestcom
@@ -2183,7 +2183,7 @@ SUBROUTINE OUTPUTWATBAL(IDAY,IHOUR,NROOTLAYER,NLAYER,          &
                               EVAPSTORE,DRAINSTORE,                     &
                               SURFACE_WATERMM,ETMM,ETMM2,               &
                               USEMEASET,ETMEAS,DISCHARGE,               &
-                              FRACWATER,WEIGHTEDSWP,TOTESTEVAPMM,       &
+                              FRACWATER,WEIGHTEDSWP,KTOT,       &
                               DRYTHICK,SOILEVAP,OVERFLOW,THERMCOND,     &
                               FRACUPTAKE,SOILMOISTURE,FSOIL1,NSUMMED,   &
                               TOTTMP,SOILTEMP,TAIR,                     &
@@ -2207,7 +2207,7 @@ SUBROUTINE OUTPUTWATBAL(IDAY,IHOUR,NROOTLAYER,NLAYER,          &
     
     REAL WSOIL,WSOILROOT,PPT,CANOPY_STORE,EVAPSTORE,DRAINSTORE
     REAL SURFACE_WATERMM,ETMM,ETMM2,ETMEAS,DISCHARGE
-    REAL WEIGHTEDSWP,TOTESTEVAPMM,DRYTHICK,SOILEVAP,OVERFLOW
+    REAL WEIGHTEDSWP,KTOT,DRYTHICK,SOILEVAP,OVERFLOW
     REAL SOILMOISTURE,FSOIL1,TOTTMP,TAIR
     REAL QH,QE,QN,QC,RGLOBUND,RGLOBABV,RGLOBABV12,RADINTERC,ESOIL,TOTLAI
     REAL RADINTERC1,RADINTERC2,RADINTERC3,SCLOSTTOT
@@ -2242,7 +2242,7 @@ SUBROUTINE OUTPUTWATBAL(IDAY,IHOUR,NROOTLAYER,NLAYER,          &
         WRITE (UWATBAL,520) IDAY+1,IHOUR,WSOIL,WSOILROOT,PPT,       &
                            CANOPY_STORE,EVAPSTORE,DRAINSTORE,       &
                            SURFACE_WATERMM,ETMM,ETMM2,DISCHARGE,    &
-                           OVERFLOW*1000,WEIGHTEDSWP,TOTESTEVAPMM,  &
+                           OVERFLOW*1000,WEIGHTEDSWP,KTOT,          &
                            DRYTHICK,SOILEVAP,SOILMOISTURE,          &
                            FSOIL1,QH,QE,QN,QC,                      &
                            RGLOBUND, RGLOBABV, RADINTERC, RNET,     &
@@ -2270,7 +2270,7 @@ SUBROUTINE OUTPUTWATBAL(IDAY,IHOUR,NROOTLAYER,NLAYER,          &
         WRITE (UWATBAL) REAL(IDAY+1),REAL(IHOUR),WSOIL,WSOILROOT,PPT,       &
                            CANOPY_STORE,EVAPSTORE,DRAINSTORE,               &
                            SURFACE_WATERMM,ETMM,ETMM2,DISCHARGE,            &
-                           OVERFLOW*1000,WEIGHTEDSWP,TOTESTEVAPMM,          &
+                           OVERFLOW*1000,WEIGHTEDSWP,KTOT,          &
                            DRYTHICK,SOILEVAP,SOILMOISTURE,                  &
                            FSOIL1,QH,QE,QN,QC,                              &
                            RGLOBUND, RGLOBABV, RADINTERC, RNET,             &
@@ -4735,10 +4735,9 @@ SUBROUTINE INTERPOLATEW(IDAY,ISTART,NOKPDATES,DATESKP,PLANTKTABLE,PLANTK,   &
     ! Prepare root mass and length arrays (from SPA, io.f90, RAD).
     ROOTLEN = 0.
     DO I=1, NROOTLAYER
-        ROOTMASS(I) = FRACROOT(I) * ROOTMASSTOT / LAYTHICK(I)      ! kg par m3 
+        ROOTMASS(I) = FRACROOT(I) * ROOTMASSTOT / LAYTHICK(I)      ! g m-3 
         ! m m-3 soil
-        ROOTLEN(I) = ROOTMASS(I) / (ROOTDENS*ROOTXSECAREA) * 1000
-    
+        ROOTLEN(I) = ROOTMASS(I) / (ROOTDENS*ROOTXSECAREA)
     END DO
 
 

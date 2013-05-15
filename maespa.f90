@@ -46,7 +46,7 @@ PROGRAM maespa
     IMPLICIT NONE
     REAL, EXTERNAL :: AVERAGEVAL,CALCRMW,TK,ETCAN,RESP,GRESP
     
-    VTITLE = 'MAESPA: version February 2011'
+    VTITLE = 'MAESPA: version May 2013'
     VTITLE = VTITLE(1:LEN_TRIM(VTITLE))
    
     ! Set program flag
@@ -688,7 +688,8 @@ PROGRAM maespa
                                     ROOTMASS,ROOTLEN,LAYTHICK,ICEPROP,EQUALUPTAKE,RETFUNCTION,USEMEASSW,        &
                                     SOILDATA, SOILMOISTURE,PSIE,BPAR,KSAT,ROOTRESIST,ROOTRESFRAC,    &
                                     ROOTRAD,MINROOTWP,TOTLAI,WINDAH(IHOUR),ZHT,Z0HT,GAMSOIL,   &
-                                    WEIGHTEDSWP,FRACUPTAKE,TOTSOILRES,ALPHARET,WS,WR,NRET)
+                                    WEIGHTEDSWP,TOTESTEVAP, &
+                                    FRACUPTAKE,TOTSOILRES,ALPHARET,WS,WR,NRET)
 
         
                 ! Soil surface T for SCATTER routine:
@@ -1147,7 +1148,7 @@ PROGRAM maespa
                               WSOILROOT,PPT(IHOUR),                                           &
                               CANOPY_STORE,EVAPSTORE,DRAINSTORE,                              &
                               SURFACE_WATERMM,ETMM,ETMM2,USEMEASET,ETMEAS(IHOUR),DISCHARGE,   &
-                              FRACWATER,WEIGHTEDSWP,TOTESTEVAP,                               &
+                              FRACWATER,WEIGHTEDSWP,KTOT,                                     &
                               DRYTHICK,SOILEVAP,OVERFLOW,THERMCOND,FRACUPTAKE,SOILMOISTURE,   &
                               FSOIL1,NSUMMED,TOTTMP,SOILTEMP-FREEZE,                          &
                               TAIR(IHOUR),QH,QE,QN,QC,RGLOBUND,RGLOBABV,RGLOBABV12,RADINTERC, &

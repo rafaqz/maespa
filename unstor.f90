@@ -18,7 +18,7 @@
 !
 !**********************************************************************
 
-
+        
 !**********************************************************************
 SUBROUTINE INPUTUSSTR(NOUSPOINTS,X0,Y0,GRDAREAI,XLU,YLU,ZLU,USLAI,NOFUDATES,DATESFU,HTUS,&
                         NOHUDATES,DATESHU,FOLNUS,NONUDATES,DATESNU,EXTKUS)

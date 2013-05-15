@@ -5,15 +5,15 @@ MODULE maestcom
     CHARACTER(LEN=3), PARAMETER :: format_binary = 'bin'
     
     ! Maximum dimensions of arrays
-    INTEGER, PARAMETER :: MAXT = 400        ! Maximum no. of trees in plot
+    INTEGER, PARAMETER :: MAXT = 1500        ! Maximum no. of trees in plot
     INTEGER, PARAMETER :: MAXLAY = 15         ! Maximum no. of layers for radiation
     INTEGER, PARAMETER :: MAXSOILLAY = 100    ! Maximum no. of layers of soil (RAD)
     INTEGER, PARAMETER :: MAXSP = 3          ! Maximum no. of species (RAD).
-    INTEGER, PARAMETER :: MAXP = 1000        ! Maximum no. of gridpoints
+    INTEGER, PARAMETER :: MAXP = 1500        ! Maximum no. of gridpoints -- MUST BE EQUAL TO OR LARGER THAN MAXT !!!!
     INTEGER, PARAMETER :: MAXC = 3            ! Maximum no. of leaf area distributions
     INTEGER, PARAMETER :: MAXANG = 20          ! Maximum no. of zenith & leaf angles
     INTEGER, PARAMETER :: MAXD = 13           ! For resp prog
-    INTEGER, PARAMETER :: MAXDATE = 12      ! Maximum no. of dates for tree or physiol parameters
+    INTEGER, PARAMETER :: MAXDATE = 400      ! Maximum no. of dates for tree or physiol parameters
     !INTEGER, PARAMETER :: maxdate = 5        ! Maximum no. of dates for physiol parameters
     !INTEGER, PARAMETER :: MAXMET = 18         ! Maximum columns in met data file
     ! changed by mgdk, just to try and compile, not 18 but MHET has 20?!!
