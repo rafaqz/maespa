@@ -1,9 +1,7 @@
 PROGRAM maespa
     ! =======================================================
-    !  MAESPA: Beta Version 2009                           |
-    !  For more information see www.bio.mq.edu.au/maestra  |
-    !  Based on Wang & Jarvis (1990) Ag For Met 51:257-280 |
-    !  Hybridized with SPA (Williams et al. 2001 TreePhys) |
+    !  MAESPA: Version 2013
+    !  For more information see www.bio.mq.edu.au/maespa 
     ! =======================================================
 
     !------------------------------------------------------------------------
