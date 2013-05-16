@@ -55,7 +55,7 @@ PROGRAM maespa
     USEMEASSW = 0
     SOILDATA = 0
     
-    ! Temporary stuff ... will go into respitatory T acclimation routines.
+    ! Temporary stuff ... will go into respiratory T acclimation routines.
     TAIRMEM = -999.99 ! All array elements...
     NTAIRADD = 0
     
