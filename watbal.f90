@@ -20,7 +20,7 @@
 !     ENERGYCALC - calculates the components of the soil surface energy balance.
 !     SOILWPFUN - soil water potential function.
 !     SOILCONDFUN - soil hydraulic conductivity function.
-!     SOILRESFUN - soil to root hydraulic conductance function.
+!     SOILRESCALC - soil to root hydraulic conductance function.
 !     WATERUPTAKELAYER - called by CALCSOILPARS.
 !     CANOPY_BALANCE - canopy interception, canopy drainage and wet ET.
 !     CANSTOR - canopy storage function, integrated by CANOPY_BALANCE
@@ -773,7 +773,7 @@ END SUBROUTINE INITWATBAL
                 
                     ! Reformulated to match Duursma et al. 2008.
                 
-                    ! Radius of soil cylinder around root                
+                    ! Radius of soil cylinder around root in single-root model               
                     RS = SQRT(1./(ROOTLEN(I)*PI))
                 
                     LOGRR = LOG(RS/ROOTRAD)
@@ -790,7 +790,6 @@ END SUBROUTINE INITWATBAL
                     ! convert from MPa s m2 m-3 to MPa s m2 mmol-1
                     !SOILR1(I) = RS2*1E-6*18*0.001
 
-                
                     ! Note : this component is calculated but not used (see wateruptakelayer proc). More research needed!
                     ! Second component of below ground resistance related to root hydraulics.
                     SOILR2(I) = ROOTRESCONS * DEPTH / ROOTLEN(I)
@@ -828,9 +827,6 @@ END SUBROUTINE INITWATBAL
           SOILRRES(1) = SOILR1(1) + SOILR2(1)
       ENDIF
       
-      
-      
-          
       RETURN
       END !SOILRESCALC
 
@@ -875,6 +871,7 @@ END SUBROUTINE INITWATBAL
         FRACUPTAKE = 0.
 
         ! Total soil conductance at the leaf level; including soil and root component.
+        ! SOILRRES2 is commented out : don't use root-component of resistance (is part of plant resistance)
         SOILRRES = SOILRRES1 !+ SOILRRES2
 
         ! Estimated max transpiration from gradient-gravity / soil resis

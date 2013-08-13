@@ -4468,8 +4468,6 @@ SUBROUTINE TREEINTERP(IDAY,ISTART,NODATES,IDATEARR,PARAMTABLE,NOTREES,PARAMS)
 ! date arrays read in from the trees file.
 ! Parameter NEWCANOPY indicates whether crown has changed - in which
 ! case grid points need to be reassigned.
-! BM Jul07 NEWCANOPY is problematic. Change to (a) check change from previous values (not on a daily basis) and
-! (b) put thresholds for different dimensions.
 !**********************************************************************
 
     USE maestcom
@@ -4735,7 +4733,8 @@ SUBROUTINE INTERPOLATEW(IDAY,ISTART,NOKPDATES,DATESKP,PLANTKTABLE,PLANTK,   &
     ! Prepare root mass and length arrays (from SPA, io.f90, RAD).
     ROOTLEN = 0.
     DO I=1, NROOTLAYER
-        ROOTMASS(I) = FRACROOT(I) * ROOTMASSTOT / LAYTHICK(I)      ! g m-3 
+        ! g m-3 
+        ROOTMASS(I) = FRACROOT(I) * ROOTMASSTOT / LAYTHICK(I)      
         ! m m-3 soil
         ROOTLEN(I) = ROOTMASS(I) / (ROOTDENS*ROOTXSECAREA)
     END DO

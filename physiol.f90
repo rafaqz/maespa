@@ -238,13 +238,12 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
     ! Simple transpiration rate assuming perfect coupling (for comparison).
     ETEST = 1E6 * (VPD/PRESS) * GSV
     
-    ! Return re-calculated leaf water potential (using the boundary layer effect on transpiration rate).
+    ! Return re-calculated leaf water potential (using ET without boundary layer conductance).
+    ! We use ETEST otherwise PSIL < PSILMIN quite frequently when soil is dry. This is difficult to interpret,
+    ! especially because PHOTOSYN does not account for boundary layer conductance.    
     !IF(MODELGS.EQ.6)THEN
-     PSIL = WEIGHTEDSWP - (ET/1000)/KTOT
-    !ENDIF
-    ! Note that this LWP can be slightly different than the one used in PHOTOSYN,
-    ! unless the Tuzet model is used (then it is corrected for by iteration).
-    ! Differences should be small though (unless boundary layer conductance very low).
+    PSIL = WEIGHTEDSWP - (ETEST/1000)/KTOT
+    
     
     RETURN
 END SUBROUTINE PSTRANSP
@@ -322,7 +321,7 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
     END IF
 
     ! Calculate soil moisture modifying factor
-    FSOIL = CALCFSOIL(WSOILMETHOD,SOILMOISTURE,SOILDATA,SMD1,SMD2,WC1,WC2,SWPEXP)
+    !FSOIL = CALCFSOIL(WSOILMETHOD,SOILMOISTURE,SOILDATA,SMD1,SMD2,WC1,WC2,SWPEXP)
 
     ! Stomatal conductance: Calculation varies according to the stomatal model chosen.
         FSOIL = 1.0 ! init
@@ -364,7 +363,6 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
         B = (1. - CS*GSDIVA) * (VCMAX - RD) + G0 * (KM - CS)- GSDIVA * (VCMAX*GAMMASTAR + KM*RD)
         C = -(1. - CS*GSDIVA) * (VCMAX*GAMMASTAR + KM*RD) - G0*KM*CS
 
-        !chk = (B*B - 4.*A*C)
         CIC = QUADP(A,B,C,IQERROR)
 
         IF ((IQERROR.EQ.1).OR.(CIC.LE.0.0).OR.(CIC.GT.CS)) THEN
@@ -418,55 +416,39 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
                 GS = GSV / GSVGSC
 
                 ! Minimum leaf water potential reached
+                ! Recalculate PSIL
                 PSIL = WEIGHTEDSWP - EMAXLEAF/KTOT
 
-                IF(GS.LT.G0.AND.G0.GT.0)THEN
-                     GS = G0
-                ENDIF
+                ! Matter of choice? What happens when calculated GS < G0? Is G0 a hard minimum or only in well-watered conditions?
+                !IF(GS.LT.G0.AND.G0.GT.0)THEN
+                !     GS = G0
+                !ENDIF
+                
+                ! A very low minimum; for numerical stability.
                 IF(GS.LT.1E-09)THEN
                     GS = 1E-09
                 ENDIF
 
-                !IF(GS.LT.1E-05) THEN
-                !    GS = 0.0
-                !    ALEAF = 0.0
-                !ELSE
+                ! Now that GS is known, solve for CI and A as in the Jarvis model.
+                ! Photosynthesis when Rubisco is limiting
+                A = 1./GS
+                B = (RD - VCMAX)/GS - CS - KM
+                C = VCMAX * (CS - GAMMASTAR) - RD * (CS + KM)
 
-                    ! Now that GS is known, solve for CI and A as in the Jarvis model.
-                    ! Photosynthesis when Rubisco is limiting
-                    A = 1./GS
-                    B = (RD - VCMAX)/GS - CS - KM
-                    C = VCMAX * (CS - GAMMASTAR) - RD * (CS + KM)
-
-                    A = 1./GS
-                    B = (0.0 - VCMAX)/GS - CS - KM
-                    C = VCMAX * (CS - GAMMASTAR) !- 0.0 * (CS + KM)
+                A = 1./GS
+                B = (0.0 - VCMAX)/GS - CS - KM
+                C = VCMAX * (CS - GAMMASTAR)
                     
-                    AC = QUADM(A,B,C,IQERROR1)
+                AC = QUADM(A,B,C,IQERROR1)
+      
+                ! Photosynthesis when electron transport is limiting
+                A = 1./GS
+                B = (RD - VJ)/GS - CS - 2*GAMMASTAR
+                C = VJ * (CS - GAMMASTAR) - RD * (CS + 2*GAMMASTAR)
+                AJ = QUADM(A,B,C,IQERROR)
 
-                    !IF (IQERROR1.EQ.1) THEN
-                    !    GS = G0
-                        !AC = - RD
-                    !    AC = 0.0
-                    !END IF
-
-                    ! Photosynthesis when electron transport is limiting
-                    A = 1./GS
-                    B = (RD - VJ)/GS - CS - 2*GAMMASTAR
-                    C = VJ * (CS - GAMMASTAR) - RD * (CS + 2*GAMMASTAR)
-                    AJ = QUADM(A,B,C,IQERROR)
-
-                    !IF (IQERROR.EQ.1) THEN
-                    !    GS = G0
-                        !AJ = - RD
-                    !END IF
-
-                    ALEAF = AMIN1(AC,AJ)       ! Emax model solution.
+                ALEAF = AMIN1(AC,AJ)       ! Emax model solution.
                     
-!                    write(uwattest,892)iqerror1,IQERROR,aleaf,gs,aj,ac,emaxleaf
-!892     FORMAT (2(I10),5(F10.5,1X))
-
-                !END IF ! if gs < 1e-05
             END IF ! if (E>EMAX)
         END IF
     

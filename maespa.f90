@@ -959,11 +959,6 @@ PROGRAM maespa
                          ENDIF
 112      FORMAT(4(1X,I4), 7(1X,F12.3), 13(1X,F12.3))
                     
-                                  ! Output grid-level data.
-                   !             WRITE(UWATTEST, 891)IHOUR,IPT,ALEAF,ET/1000,ETEST/1000,  &
-                   !                 KTOT, WEIGHTEDSWP, PSIL, EMAXLEAF
-                   !     891     FORMAT (I7, I7, 1X, 9(F8.5,1X))
-
                     END DO ! End loop over grid points
                     
                     ! Calculate transpiration by applying Penman-Monteith to canopy
