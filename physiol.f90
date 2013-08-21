@@ -38,7 +38,8 @@ SUBROUTINE PSTRANSPIF(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,
                     Q10F,K10F,RTEMP,DAYRESP,TBELOW,MODELGS,WSOILMETHOD,EMAXLEAF,SOILMOISTURE,    &
                     SMD1,SMD2,WC1,WC2,SOILDATA,SWPEXP,FSOIL,G0,D0L,GAMMA,VPDMIN,G1,GK,WLEAF,NSIDES,   &
                     VPARA,VPARB,VPARC,VFUN,SF,PSIV,ITERMAX,GSC,ALEAF,RD,ET,FHEAT, &
-                    TLEAF,GBH,PLANTK,TOTSOILRES,MINLEAFWP,WEIGHTEDSWP,KTOT,HMSHAPE,PSIL,ETEST,CI)
+                    TLEAF,GBH,PLANTK,TOTSOILRES,MINLEAFWP,WEIGHTEDSWP,KTOT,HMSHAPE,PSIL,ETEST,CI, &
+                    ISMAESPA)
 !
 ! 'Interface' to PSTRANSP (new subroutine, Feb. 2011). 
 ! Calculates (numericall) the leaf water potential for the Tuzet model; 
@@ -63,6 +64,7 @@ SUBROUTINE PSTRANSPIF(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,
     REAL ET,RNET,GBC,TDIFF,TLEAF1,FHEAT,ETEST,SF,PSIV,HMSHAPE
     REAL PSILIN,PLANTK,TOTSOILRES,MINLEAFWP,CI
     REAL TMP,VPARA,VPARB,VPARC,VPDMIN,GK
+    LOGICAL ISMAESPA
 
 
     ! Find leaf water potential that matches Tuzet model (tuzet gs = f(psi), and psi = f(gs)).
@@ -83,7 +85,7 @@ SUBROUTINE PSTRANSPIF(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,
                     Q10F,K10F,RTEMP,DAYRESP,TBELOW,MODELGS,WSOILMETHOD,EMAXLEAF,SOILMOISTURE,    &
                     SMD1,SMD2,WC1,WC2,SOILDATA,SWPEXP,FSOIL,G0,D0L,GAMMA,VPDMIN,G1,GK,WLEAF,NSIDES,   &
                     VPARA,VPARB,VPARC,VFUN,SF,PSIV,ITERMAX,GSC,ALEAF,RD,ET,FHEAT,TLEAF,GBH,PLANTK,TOTSOILRES,MINLEAFWP,   &
-                    WEIGHTEDSWP,KTOT,HMSHAPE,PSILIN,PSIL,ETEST,CI)
+                    WEIGHTEDSWP,KTOT,HMSHAPE,PSILIN,PSIL,ETEST,CI,ISMAESPA)
     
 
 END SUBROUTINE PSTRANSPIF
@@ -95,7 +97,7 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
                     SMD1,SMD2,WC1,WC2,SOILDATA,SWPEXP,FSOIL,G0,D0L,GAMMA,VPDMIN,G1,GK,WLEAF,NSIDES,   &
                     VPARA,VPARB,VPARC,VFUN,SF,PSIV,ITERMAX,GSC,ALEAF,RD,ET,FHEAT, &
                     TLEAF,GBH,PLANTK,TOTSOILRES,MINLEAFWP,  &
-                    WEIGHTEDSWP,KTOT,HMSHAPE,PSILIN,PSIL,ETEST,CI)
+                    WEIGHTEDSWP,KTOT,HMSHAPE,PSILIN,PSIL,ETEST,CI,ISMAESPA)
 ! This subroutine calculates leaf photosynthesis and transpiration.
 ! These may be calculated by
 ! (1) assuming leaf temperature = air temperature, Cs = Ca and Ds = Da
@@ -123,6 +125,7 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
     REAL ET,RNET,GBC,TDIFF,TLEAF1,FHEAT,ETEST,SF,PSIV,HMSHAPE
     REAL PSILIN,CI,VPARA,VPARB,VPARC,VPDMIN,GK
     logical failconv
+    LOGICAL ISMAESPA
     CHARACTER*70 errormessage
     
     REAL, EXTERNAL :: SATUR
@@ -133,8 +136,11 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
 
     failconv = .FALSE.
     
-    KTOT = 1./(TOTSOILRES + 1./PLANTK)
-        
+    ! Hydraulic conductance of the entire soil-to-leaf pathway
+    IF(ISMAESPA)THEN
+        KTOT = 1./(TOTSOILRES + 1./PLANTK)
+    ENDIF
+    
     !write(uwattest, *)ktot,plantk
 
     ! Set initial values of leaf temp and surface CO2 & VPD
@@ -163,7 +169,7 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
                     MODELGS,GSREF,GSMIN,I0,D0,VK1,VK2,VPD1,VPD2,VMFD0,GSJA,GSJB,T0,TREF,TMAX,&
                     WSOILMETHOD,SOILMOISTURE,EMAXLEAF,SMD1,SMD2,WC1,WC2,SOILDATA,SWPEXP,FSOIL,&
                     G0,D0L,GAMMA,VPDMIN,G1,GK,GSC,ALEAF,RD,MINLEAFWP,KTOT,WEIGHTEDSWP, & 
-                    VPARA,VPARB,VPARC,VFUN,SF,PSIV,HMSHAPE,PSILIN,PSIL,CI)
+                    VPARA,VPARB,VPARC,VFUN,SF,PSIV,HMSHAPE,PSILIN,PSIL,CI,ISMAESPA)
      
     ! Boundary layer conductance for heat - single sided, free convection
     GBHF = GBHFREE(TAIR,TLEAF,PRESS,WLEAF)
@@ -235,15 +241,16 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
     !      FHEAT = (TLEAF - TAIR)*2.*GBH*CPAIR*AIRMA  !BM 12/05 Not correct - use energy bal instead
     ET = ET*1E6  ! Return ET,EI in umol m-2 s-1
 
-    ! Simple transpiration rate assuming perfect coupling (for comparison).
-    ETEST = 1E6 * (VPD/PRESS) * GSV
+    IF(ISMAESPA)THEN
+        ! Simple transpiration rate assuming perfect coupling (for comparison).
+        ETEST = 1E6 * (VPD/PRESS) * GSV
     
-    ! Return re-calculated leaf water potential (using ET without boundary layer conductance).
-    ! We use ETEST otherwise PSIL < PSILMIN quite frequently when soil is dry. This is difficult to interpret,
-    ! especially because PHOTOSYN does not account for boundary layer conductance.    
-    !IF(MODELGS.EQ.6)THEN
-    PSIL = WEIGHTEDSWP - (ETEST/1000)/KTOT
-    
+        ! Return re-calculated leaf water potential (using ET without boundary layer conductance).
+        ! We use ETEST otherwise PSIL < PSILMIN quite frequently when soil is dry. This is difficult to interpret,
+        ! especially because PHOTOSYN does not account for boundary layer conductance.    
+        !IF(MODELGS.EQ.6)THEN
+        PSIL = WEIGHTEDSWP - (ETEST/1000)/KTOT
+    ENDIF
     
     RETURN
 END SUBROUTINE PSTRANSP
@@ -258,7 +265,7 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
         EMAXLEAF,SMD1,SMD2,WC1,WC2, &
         SOILDATA,SWPEXP, &
         FSOIL,G0,D0L,GAMMA,VPDMIN,G1,GK,GS,ALEAF,RD,MINLEAFWP,KTOT,WEIGHTEDSWP, &
-        VPARA,VPARB,VPARC,VFUN,SF,PSIV,HMSHAPE,PSILIN,PSIL,CI)
+        VPARA,VPARB,VPARC,VFUN,SF,PSIV,HMSHAPE,PSILIN,PSIL,CI,ISMAESPA)
 ! This subroutine calculates photosynthesis according to the ECOCRAFT
 ! agreed formulation of the Farquhar & von Caemmerer (1982) equations.
 ! Stomatal conductance may be calculated according to the Jarvis,
@@ -285,6 +292,7 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
     REAL A,B,C,AC,AJ,GSDIVA,CIC,CIJ,FPSIF
     REAL KMFN,JMAXTFN,CHK,CI,tmp,VPDMIN
     REAL VPARA,VPARB,VPARC,GK
+    LOGICAL ISMAESPA
     REAL, EXTERNAL :: GAMMAFN
     REAL, EXTERNAL :: VCMAXTFN
     REAL, EXTERNAL :: QUADM
@@ -301,9 +309,11 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
     RD = RESP(RD0,RD0ACC,TLEAF,TMOVE,Q10F,K10F,RTEMP,DAYRESP,TBELOW)
     
     ! Effect of soil water stress on Vcmax and Jmax.
-    VJMOD = VJMAXWFN(WEIGHTEDSWP, VPARA, VPARB, VPARC, VFUN)
-    VCMAX = VCMAX * VJMOD
-    JMAX = JMAX * VJMOD
+    IF(ISMAESPA)THEN
+        VJMOD = VJMAXWFN(WEIGHTEDSWP, VPARA, VPARB, VPARC, VFUN)
+        VCMAX = VCMAX * VJMOD
+        JMAX = JMAX * VJMOD
+    ENDIF
     
     ! Actual electron transport rate
     J = QUADM(THETA,-(AJQ*PAR+JMAX),AJQ*PAR*JMAX,IQERROR)
@@ -395,63 +405,64 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
 
         ! If E > Emax, set E to Emax, and corresponding gs and A.
         ! Do not use this routine when the Tuzet model of gs (6) is used.
-        IF(WSOILMETHOD.EQ.1.AND.MODELGS.NE.6)THEN
+        IF(ISMAESPA)THEN
+            IF(WSOILMETHOD.EQ.1.AND.MODELGS.NE.6)THEN
 
-            ! Maximum transpiration rate
-            EMAXLEAF = KTOT * (WEIGHTEDSWP - MINLEAFWP)
+                ! Maximum transpiration rate
+                EMAXLEAF = KTOT * (WEIGHTEDSWP - MINLEAFWP)
 
-            ! Leaf transpiration in mmol m-2 s-1  -  ignoring boundary layer effects!
-            ETEST = 1000 * (VPD/PATM) * GS * GSVGSC
+                ! Leaf transpiration in mmol m-2 s-1  -  ignoring boundary layer effects!
+                ETEST = 1000 * (VPD/PATM) * GS * GSVGSC
 
-            ! Leaf water potential
-            PSIL = WEIGHTEDSWP - ETEST/KTOT
+                ! Leaf water potential
+                PSIL = WEIGHTEDSWP - ETEST/KTOT
     
-            IF(ETEST > EMAXLEAF)THEN
+                IF(ETEST > EMAXLEAF)THEN
 
-                ! Just for output:
-                FSOIL = EMAXLEAF / ETEST
+                    ! Just for output:
+                    FSOIL = EMAXLEAF / ETEST
 
-                ! Gs in mol m-2 s-1
-                GSV = 1E-03 * EMAXLEAF / (VPD/PATM)
-                GS = GSV / GSVGSC
+                    ! Gs in mol m-2 s-1
+                    GSV = 1E-03 * EMAXLEAF / (VPD/PATM)
+                    GS = GSV / GSVGSC
 
-                ! Minimum leaf water potential reached
-                ! Recalculate PSIL
-                PSIL = WEIGHTEDSWP - EMAXLEAF/KTOT
+                    ! Minimum leaf water potential reached
+                    ! Recalculate PSIL
+                    PSIL = WEIGHTEDSWP - EMAXLEAF/KTOT
 
-                ! Matter of choice? What happens when calculated GS < G0? Is G0 a hard minimum or only in well-watered conditions?
-                !IF(GS.LT.G0.AND.G0.GT.0)THEN
-                !     GS = G0
-                !ENDIF
+                    ! Matter of choice? What happens when calculated GS < G0? Is G0 a hard minimum or only in well-watered conditions?
+                    !IF(GS.LT.G0.AND.G0.GT.0)THEN
+                    !     GS = G0
+                    !ENDIF
                 
-                ! A very low minimum; for numerical stability.
-                IF(GS.LT.1E-09)THEN
-                    GS = 1E-09
-                ENDIF
+                    ! A very low minimum; for numerical stability.
+                    IF(GS.LT.1E-09)THEN
+                        GS = 1E-09
+                    ENDIF
 
-                ! Now that GS is known, solve for CI and A as in the Jarvis model.
-                ! Photosynthesis when Rubisco is limiting
-                A = 1./GS
-                B = (RD - VCMAX)/GS - CS - KM
-                C = VCMAX * (CS - GAMMASTAR) - RD * (CS + KM)
+                    ! Now that GS is known, solve for CI and A as in the Jarvis model.
+                    ! Photosynthesis when Rubisco is limiting
+                    A = 1./GS
+                    B = (RD - VCMAX)/GS - CS - KM
+                    C = VCMAX * (CS - GAMMASTAR) - RD * (CS + KM)
 
-                A = 1./GS
-                B = (0.0 - VCMAX)/GS - CS - KM
-                C = VCMAX * (CS - GAMMASTAR)
+                    A = 1./GS
+                    B = (0.0 - VCMAX)/GS - CS - KM
+                    C = VCMAX * (CS - GAMMASTAR)
                     
-                AC = QUADM(A,B,C,IQERROR1)
+                    AC = QUADM(A,B,C,IQERROR1)
       
-                ! Photosynthesis when electron transport is limiting
-                A = 1./GS
-                B = (RD - VJ)/GS - CS - 2*GAMMASTAR
-                C = VJ * (CS - GAMMASTAR) - RD * (CS + 2*GAMMASTAR)
-                AJ = QUADM(A,B,C,IQERROR)
+                    ! Photosynthesis when electron transport is limiting
+                    A = 1./GS
+                    B = (RD - VJ)/GS - CS - 2*GAMMASTAR
+                    C = VJ * (CS - GAMMASTAR) - RD * (CS + 2*GAMMASTAR)
+                    AJ = QUADM(A,B,C,IQERROR)
 
-                ALEAF = AMIN1(AC,AJ)       ! Emax model solution.
+                    ALEAF = AMIN1(AC,AJ)       ! Emax model solution.
                     
-            END IF ! if (E>EMAX)
-        END IF
-    
+                ENDIF ! if (E>EMAX)
+            ENDIF
+        ENDIF
     
     ! Return CI.
     IF(GS.GT.0.AND.ALEAF.GT.0)THEN
@@ -1183,6 +1194,7 @@ REAL FUNCTION PSILOBJFUN(PSILIN, EXTRAPARS, EXTRAINT)
         REAL ET,RNET,GBC,TDIFF,TLEAF1,FHEAT,ETEST,SF,PSIV,HMSHAPE
         REAL PSILIN,TOTSOILRES,PLANTK,MINLEAFWP,CI,GK
         REAL VPARA,VPARB,VPARC,VPDMIN
+        LOGICAL ISMAESPA
         integer iday,ihour
         REAL EXTRAPARS(EXTRAPARDIM)
         INTEGER EXTRAINT(10)
@@ -1251,7 +1263,8 @@ REAL FUNCTION PSILOBJFUN(PSILIN, EXTRAPARS, EXTRAINT)
           VPARC = EXTRAPARS(53)
           VPDMIN = EXTRAPARS(54)
           GK = EXTRAPARS(55)
-        
+          
+          ISMAESPA = .FALSE.
 !        iday = -1
 !        ihour = -1
         MINLEAFWP = 0  ! Not used in tuzet.
@@ -1263,7 +1276,7 @@ REAL FUNCTION PSILOBJFUN(PSILIN, EXTRAPARS, EXTRAINT)
              Q10F,K10F,RTEMP,DAYRESP,TBELOW,MODELGS,WSOILMETHOD,EMAXLEAF,SOILMOISTURE,    &
              SMD1,SMD2,WC1,WC2,SOILDATA,SWPEXP,FSOIL,G0,D0L,GAMMA,VPDMIN,G1,GK,WLEAF,NSIDES,   &
              VPARA,VPARB,VPARC,VFUN,SF,PSIV,ITERMAX,GSC,ALEAF,RD,ET,FHEAT,  &
-             TLEAF,GBH,PLANTK,TOTSOILRES,MINLEAFWP, WEIGHTEDSWP,KTOT,HMSHAPE,PSILIN,PSIL,ETEST,CI)
+             TLEAF,GBH,PLANTK,TOTSOILRES,MINLEAFWP, WEIGHTEDSWP,KTOT,HMSHAPE,PSILIN,PSIL,ETEST,CI,ISMAESPA)
         
         PSILOBJFUN = PSILIN - PSIL
 

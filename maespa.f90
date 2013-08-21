@@ -66,6 +66,13 @@ PROGRAM maespa
     CALL OPENINPUTF(CTITLE,TTITLE,PTITLE,STITLE,WTITLE,UTITLE,IWATFILE, &
                     KEEPZEN,IUSTFILE,in_path,out_path)
    
+    ! Decide whether to simulate the water balance (MAESPA) or not (MAESTRA)    
+    IF(IWATFILE .EQ. 0)THEN
+       ISMAESPA = .FALSE.
+    ELSE
+       ISMAESPA = .TRUE.
+    ENDIF
+    
     ! Get input from control file
     CALL INPUTCON(ISTART, IEND, NSTEP,NUMPNT, NOLAY, PPLAY, NZEN, DIFZEN, NAZ,      &
                     MODELGS, MODELJM, MODELRD, MODELSS, MODELRW, ITERMAX, IOHIST,   &
@@ -96,6 +103,12 @@ PROGRAM maespa
                     SMD1SPEC,SMD2SPEC,WC1SPEC, WC2SPEC,SWPEXPSPEC,G0TABLESPEC,G1TABLESPEC,      &
                     GKSPEC,NOGSDATESSPEC,DATESGSSPEC,D0LSPEC,GAMMASPEC,VPDMINSPEC,WLEAFTABLESPEC,DATESWLEAFSPEC,NOWLEAFDATESSPEC,NSIDESSPEC,           &
                     SFSPEC,PSIVSPEC,VPARASPEC,VPARBSPEC,VPARCSPEC,VFUNSPEC,in_path)
+    
+    ! Cannot use Tuzet with MAESTRA (because plantk is in watpars.dat!)
+    IF(ISMAESPA.AND.MODELGS.EQ.6)THEN
+        CALL SUBERROR('Error: Cannot use Tuzet model in MAESTRA. Use MAESPA!', IFATAL, 0)
+    ENDIF
+    
     ! Get input from trees file
     CALL INPUTTREE(XSLOPE,YSLOPE,BEAR,X0,Y0,XMAX,YMAX,PLOTAREA,STOCKING,ZHT,Z0HT,ZPD, &
                     NOALLTREES,NOTREES,NOTARGETS,ITARGETS,SHADEHT,NOXDATES, &
@@ -105,26 +118,22 @@ PROGRAM maespa
                     TOTLAITABLE,DIAMTABLE1,IFLUSH,DT1,DT2,DT3,DT4,EXPTIME,  &
                     APP,EXPAN,WEIGHTS,NSPECIES,ISPECIES)
     
-    ! Do calculations which are not day-dependent.
-!    DO I=1,NSPECIES
-!        CALL EXDIFF(NALPHASPEC(I),ALPHASPEC(1:MAXANG,I),FALPHASPEC(1:MAXANG,I),&       ! dans la boucle Mathias février 2012
-!                    NZEN,DIFZEN,RANDOMSPEC(I),DEXTSPEC(I,1:MAXANG))
-!    END DO
-   
     ! Get input from the water balance file
-    CALL INPUTWATBAL(BPAR, PSIE, KSAT, ROOTRESIST, ROOTRESFRAC, ROOTRADTABLE, ROOTDENSTABLE,ROOTMASSTOTTABLE,              &
+    IF(ISMAESPA)THEN
+        CALL INPUTWATBAL(BPAR, PSIE, KSAT, ROOTRESIST, ROOTRESFRAC, ROOTRADTABLE, ROOTDENSTABLE,ROOTMASSTOTTABLE,              &
                         MINROOTWP,MINLEAFWP,PLANTKTABLE,KSCALING,THROUGHFALL,REASSIGNRAIN,RUTTERB,RUTTERD, MAXSTORAGE, &
                         DRAINLIMIT,ROOTXSECAREA,EQUALUPTAKE,NLAYER, NROOTLAYER, LAYTHICK, INITWATER,    & 
                         FRACROOTTABLE, POREFRAC, SOILTEMP, KEEPWET,DRYTHICKMIN,TORTPAR, SIMTSOIL,RETFUNCTION,&
                         FRACORGANIC, EXPINF, WSOILMETHOD, USEMEASET,USEMEASSW,SIMSOILEVAP,USESTAND,ALPHARET,WS,WR,NRET,&
                         DATESKP,NOKPDATES,DATESROOT,NOROOTDATES)
-
+    ENDIF
+    
     ! Open met data file (must be done after ISTART & IEND read)
     CALL OPENMETF(ISTART,IEND,CAK,PRESSK,SWMIN,SWMAX,USEMEASET,DIFSKY,ALAT,TTIMD,DELTAT,&
                     MFLAG,METCOLS,NOMETCOLS,MTITLE,MSTART,in_path)
     
     ! Open output files
-    CALL open_output_files(ISIMUS,CTITLE,TTITLE,PTITLE,STITLE,MTITLE,VTITLE,WTITLE,NSPECIES,SPECIESNAMES,out_path)
+    CALL open_output_files(ISIMUS,CTITLE,TTITLE,PTITLE,STITLE,MTITLE,VTITLE,WTITLE,NSPECIES,SPECIESNAMES,out_path,ISMAESPA)
     
     
     IF(ISIMUS.EQ.1)THEN
@@ -137,11 +146,12 @@ PROGRAM maespa
     ENDIF
     
     ! Initialize various variables related to water balance calculations.
+    IF(ISMAESPA)THEN
     CALL INITWATBAL(LAYTHICK,WETTINGBOT,WETTINGTOP,POREFRAC,WATERGAIN,WATERLOSS,PPTGAIN,    &
                     INITWATER,DRYTHICKMIN,DRYTHICK,CANOPY_STORE,SURFACE_WATERMM,FRACWATER,  &
                     WSOIL,WSOILROOT,NLAYER,NROOTLAYER,ICEPROP,QE,RUNOFF,OUTFLOW,SOILDEPTH,  &
                     SOILDATA,USEMEASSW)
-     
+    ENDIF
 
     !***********************************************************************!
     !                       Begin daily loop                                !
@@ -158,15 +168,18 @@ PROGRAM maespa
         !**********************************************************************
     
         CALL INTERPOLATEDIST(IDAY,ISTART,FRACROOTTABLE,NOROOTDATES,DATESROOT,FRACROOT,NROOTLAYER, NALPHASPEC, &
-                                FALPHATABLESPEC,DATESLIA,NOLIADATES,FALPHASPEC,NSPECIES)
+                                FALPHATABLESPEC,DATESLIA,NOLIADATES,FALPHASPEC,NSPECIES, &
+                                ISMAESPA)
         
-        CALL INTERPOLATEW(IDAY,ISTART,NOKPDATES,DATESKP,PLANTKTABLE,PLANTK,  &
-                          NOROOTDATES,DATESROOT,ROOTRADTABLE,ROOTDENSTABLE,ROOTMASSTOTTABLE, &
-                          FRACROOT,LAYTHICK,ROOTRESFRAC,ROOTXSECAREA, ROOTLEN, ROOTRESIST, ROOTMASS,NROOTLAYER,ROOTRAD)    
-                
+        IF(ISMAESPA)THEN
+            CALL INTERPOLATEW(IDAY,ISTART,NOKPDATES,DATESKP,PLANTKTABLE,PLANTK,  &
+                              NOROOTDATES,DATESROOT,ROOTRADTABLE,ROOTDENSTABLE,ROOTMASSTOTTABLE, &
+                              FRACROOT,LAYTHICK,ROOTRESFRAC,ROOTXSECAREA, ROOTLEN, ROOTRESIST, ROOTMASS,NROOTLAYER,ROOTRAD)    
+        ENDIF
+        
         CALL LADCHOOSE(IDAY,ISTART,NSPECIES,NOLADDATES,DATESLAD,BPTTABLESPEC,BPTSPEC)
                     
-!        FAIRE SORTIR BPTSPEC
+!       FAIRE SORTIR BPTSPEC - English comments please
         DO I=1,NSPECIES
             CALL EXDIFF(NALPHASPEC(I),ALPHASPEC(1:MAXANG,I),FALPHASPEC(1:MAXANG,I),&       ! dans la boucle Mathias février 2012
                         NZEN,DIFZEN,RANDOMSPEC(I),DEXTSPEC(I,1:MAXANG))
@@ -677,26 +690,31 @@ PROGRAM maespa
                     CALL EHC(NUMPNT,TU,TD,TOTLAI,XSLOPE,YSLOPE,NAZ,NZEN,DIFZEN,DEXT,DLAI,EXPDIF,LAYER,MLAYER)
                 END IF
                 
-                ! Assign soil water measurement to SOILMOIST, depending on settings.
-                CALL ASSIGNSOILWATER(WSOILMETHOD,USEMEASSW,SWMIN,SWMAX,SOILMOIST(IHOUR), WSOILROOT, &
-                                        SOILDEPTH,SOILDATA, SOILMOISTURE)
+                IF(ISMAESPA)THEN
+                    
+                    ! Assign soil water measurement to SOILMOIST, depending on settings.
+                    CALL ASSIGNSOILWATER(WSOILMETHOD,USEMEASSW,SWMIN,SWMAX,SOILMOIST(IHOUR), WSOILROOT, &
+                                            SOILDEPTH,SOILDATA, SOILMOISTURE)
                 
-                ! Soil water potential, conductivity & conductance, fractional uptake (but no uptake yet).
-                CALL CALCSOILPARS(NLAYER,NROOTLAYER,SOILWP,FRACWATER,FRACORGANIC,POREFRAC,SOILCOND,THERMCOND,   &
-                                    ROOTMASS,ROOTLEN,LAYTHICK,ICEPROP,EQUALUPTAKE,RETFUNCTION,USEMEASSW,        &
-                                    SOILDATA, SOILMOISTURE,PSIE,BPAR,KSAT,ROOTRESIST,ROOTRESFRAC,    &
-                                    ROOTRAD,MINROOTWP,TOTLAI,WINDAH(IHOUR),ZHT,Z0HT,GAMSOIL,   &
-                                    WEIGHTEDSWP,TOTESTEVAP, &
-                                    FRACUPTAKE,TOTSOILRES,ALPHARET,WS,WR,NRET)
+                    ! Soil water potential, conductivity & conductance, fractional uptake (but no uptake yet).
+                    CALL CALCSOILPARS(NLAYER,NROOTLAYER,SOILWP,FRACWATER,FRACORGANIC,POREFRAC,SOILCOND,THERMCOND,   &
+                                        ROOTMASS,ROOTLEN,LAYTHICK,ICEPROP,EQUALUPTAKE,RETFUNCTION,USEMEASSW,        &
+                                        SOILDATA, SOILMOISTURE,PSIE,BPAR,KSAT,ROOTRESIST,ROOTRESFRAC,    &
+                                        ROOTRAD,MINROOTWP,TOTLAI,WINDAH(IHOUR),ZHT,Z0HT,GAMSOIL,   &
+                                        WEIGHTEDSWP,TOTESTEVAP, &
+                                        FRACUPTAKE,TOTSOILRES,ALPHARET,WS,WR,NRET)
 
-        
-                ! Soil surface T for SCATTER routine:
-                IF(SIMTSOIL.EQ.0)THEN  ! No Tsoil simulated.
-                    PREVTSOIL = TK(TSOIL(IHOUR))
+                    ! Soil surface T for SCATTER routine:
+                    IF(SIMTSOIL.EQ.0)THEN  ! No Tsoil simulated.
+                        PREVTSOIL = TK(TSOIL(IHOUR))
+                    ELSE
+                        PREVTSOIL = SOILTEMP(1)
+                    ENDIF
                 ELSE
-                    PREVTSOIL = SOILTEMP(1)
-                END IF
-          
+                    WEIGHTEDSWP = 0
+                ENDIF
+                
+                
                 ! Test to see if daylight hours or if any foliage
                 IF ((ABS(ZEN(IHOUR)) <  PI/2.0 ) .AND. (RADABV(IHOUR,1) > 1.0) .AND. (FOLT(1) > 0.0)) THEN
                     
@@ -865,7 +883,7 @@ PROGRAM maespa
                                                     K10F,RTEMP,DAYRESP,TBELOW,MODELGS,WSOILMETHOD,EMAXLEAF,SOILMOISTURE,        &
                                                     SMD1,SMD2,WC1,WC2,SOILDATA,SWPEXP,FSOIL,G0,D0L,GAMMA,VPDMIN,G1,GK,WLEAF,NSIDES,VPARA,VPARB,VPARC,VFUN, &
                                                     SF,PSIV,ITERMAX,GSC,ALEAF,RD,ET,HFX,TLEAF,GBH,PLANTK,TOTSOILRES,MINLEAFWP,WEIGHTEDSWP,KTOT,                    &
-                                                    HMSHAPE,PSIL,ETEST,CI)                                    
+                                                    HMSHAPE,PSIL,ETEST,CI,ISMAESPA)                                    
                                     
 892     FORMAT (1(I10),6(F10.5,1X))
                                     ! Sum (or average) outputs for the hour
@@ -896,7 +914,7 @@ PROGRAM maespa
                                                 SOILMOISTURE,SMD1,SMD2,WC1,WC2,SOILDATA,SWPEXP,FSOIL,G0,D0L,    &
                                                 GAMMA,VPDMIN,G1,GK,WLEAF,NSIDES,VPARA,VPARB,VPARC,VFUN,SF,PSIV,            &
                                                 ITERMAX,GSC,ALEAF,RD,ET,HFX,TLEAF,                              &
-                                                GBH,PLANTK,TOTSOILRES,MINLEAFWP,WEIGHTEDSWP,KTOT,HMSHAPE,PSIL,ETEST,CI)                                        
+                                                GBH,PLANTK,TOTSOILRES,MINLEAFWP,WEIGHTEDSWP,KTOT,HMSHAPE,PSIL,ETEST,CI,ISMAESPA)                                        
 
                                 ! Sum outputs for the hour
                                 CALL SUMHR(APAR/UMOLPERJ,ANIR,ATHR,ALEAF,RD,GSC,GBH,ET,HFX,TLEAF,FSOIL,PSIL,CI,AREA,IHOUR,LGP(IPT),ITAR,&
@@ -936,7 +954,7 @@ PROGRAM maespa
                                                         WSOILMETHOD,EMAXLEAF,SOILMOISTURE,SMD1,SMD2,WC1,WC2,            &
                                                         SOILDATA,SWPEXP,FSOIL,G0,D0L,GAMMA,VPDMIN,G1,GK,WLEAF,NSIDES,VPARA,VPARB,VPARC,VFUN,SF,PSIV,     &
                                                         ITERMAX,GSC,ALEAF,RD,ET,HFX,TLEAF,GBH,PLANTK,TOTSOILRES,MINLEAFWP,WEIGHTEDSWP,KTOT,   &
-                                                        HMSHAPE,PSIL,ETEST,CI)
+                                                        HMSHAPE,PSIL,ETEST,CI,ISMAESPA)
                                     
                                         ! Sum outputs for the hour
                                         CALL SUMHR(APAR/UMOLPERJ,ANIR,ATHR,ALEAF,RD,GSC,GBH,ET,HFX,TLEAF,FSOIL,PSIL,CI,AREA,IHOUR,  &
@@ -1081,82 +1099,86 @@ PROGRAM maespa
 !               ENDIF
 !            ENDDO
             
+            !
+            IF(ISMAESPA)THEN
+                ! Get area-based estimates of radiation interception and transpiration rate.
+                CALL SCALEUP(IHOUR, USESTAND, NOTARGETS, NOALLTREES, TARGETFOLS,ITARGETS,TOTLAI,STOCKING,  &
+                                SCLOSTTREE,THRAB,RADABV,FH2O,PLOTAREA,  &
+                                DOWNTHTREE,RGLOBABV,RGLOBUND,RADINTERC,FRACAPAR,ISIMUS,FH2OUS(IHOUR),THRABUS(IHOUR),   &
+                                PARUSMEAN(IHOUR),SCLOSTTOT,GSCAN,WINDAH(IHOUR),ZHT,Z0HT,ZPD,PRESS(IHOUR),TAIR(IHOUR),       &
+                                VPD(IHOUR),ETMM,ETUSMM)            
 
-            ! Get area-based estimates of radiation interception and transpiration rate.
-            CALL SCALEUP(IHOUR, USESTAND, NOTARGETS, NOALLTREES, TARGETFOLS,ITARGETS,TOTLAI,STOCKING,  &
-                            SCLOSTTREE,THRAB,RADABV,FH2O,PLOTAREA,  &
-                            DOWNTHTREE,RGLOBABV,RGLOBUND,RADINTERC,FRACAPAR,ISIMUS,FH2OUS(IHOUR),THRABUS(IHOUR),   &
-                            PARUSMEAN(IHOUR),SCLOSTTOT,GSCAN,WINDAH(IHOUR),ZHT,Z0HT,ZPD,PRESS(IHOUR),TAIR(IHOUR),       &
-                            VPD(IHOUR),ETMM,ETUSMM)            
+                ! Find soil surface temperature, unless this is input data.
+                ! Note this uses DRYTHICK from previous timestep (or initial value in first go).
+                IF(SIMTSOIL.EQ.1) THEN
+                    VIEWFACTOR = 1.0  ! OBSOLETE...
+                    CALL FINDSOILTK(iday, TAIR(IHOUR) + FREEZE, GAMSOIL, PRESS(IHOUR),SOILTK, SOILTEMP(2), VPD(IHOUR)/1000, &
+                                    RGLOBUND,THERMCOND(1), LAYTHICK(1), POREFRAC(1),SOILWP(1),DRYTHICK,TORTPAR,VIEWFACTOR)
+                ELSE
+                    SOILTK = TSOIL(IHOUR) + FREEZE
+                ENDIF
 
-            ! Find soil surface temperature, unless this is input data.
-            ! Note this uses DRYTHICK from previous timestep (or initial value in first go).
-            IF(SIMTSOIL.EQ.1) THEN
-                VIEWFACTOR = 1.0  ! OBSOLETE...
-                CALL FINDSOILTK(iday, TAIR(IHOUR) + FREEZE, GAMSOIL, PRESS(IHOUR),SOILTK, SOILTEMP(2), VPD(IHOUR)/1000, &
-                                RGLOBUND,THERMCOND(1), LAYTHICK(1), POREFRAC(1),SOILWP(1),DRYTHICK,TORTPAR,VIEWFACTOR)
-            ELSE
-                SOILTK = TSOIL(IHOUR) + FREEZE
-            ENDIF
-
-            ! Calculate components of heat balance. (latent heat flux (QE) is needed for water balance).
-            IF(USEMEASET.EQ.0.AND.SIMSOILEVAP.EQ.1) THEN
-                CALL ENERGYCALC(SOILTK,GAMSOIL,PRESS(IHOUR),SOILTEMP(2),                                &
-                                VPD(IHOUR)/1000,RGLOBUND,TAIR(IHOUR) + FREEZE,THERMCOND(1),             &
-                                LAYTHICK(1),POREFRAC(1),SOILWP(1),DRYTHICK,TORTPAR,VIEWFACTOR,          &
-                                QH,QE,QN,QC,ESOIL)
-            !ENDIF
+                ! Calculate components of heat balance. (latent heat flux (QE) is needed for water balance).
+                IF(USEMEASET.EQ.0.AND.SIMSOILEVAP.EQ.1) THEN
+                    CALL ENERGYCALC(SOILTK,GAMSOIL,PRESS(IHOUR),SOILTEMP(2),                                &
+                                    VPD(IHOUR)/1000,RGLOBUND,TAIR(IHOUR) + FREEZE,THERMCOND(1),             &
+                                    LAYTHICK(1),POREFRAC(1),SOILWP(1),DRYTHICK,TORTPAR,VIEWFACTOR,          &
+                                    QH,QE,QN,QC,ESOIL)
+                !ENDIF
             
-            ! Or, do not calculate heat balance. Either if using measured ET for water balance,
-            ! or if not simulating soil evaporation (which would render heat balance meaningless anyway).
-            !IF(USEMEASET.EQ.1.OR.SIMSOILEVAP.EQ.0)THEN
-            ELSE 
-                QE = 0
-                QH = 0
-                QN = 0
-                QC = 0
-            ENDIF
+                ! Or, do not calculate heat balance. Either if using measured ET for water balance,
+                ! or if not simulating soil evaporation (which would render heat balance meaningless anyway).
+                !IF(USEMEASET.EQ.1.OR.SIMSOILEVAP.EQ.0)THEN
+                ELSE 
+                    QE = 0
+                    QH = 0
+                    QN = 0
+                    QC = 0
+                ENDIF
             
-            ! Layered water balance, outputs new soil water content, discharge,
-            ! soil evaporation, overflow, thickness of dry layer.
-            CALL WATBALLAY(IDAY,IHOUR,PPT(IHOUR),RUTTERB,RUTTERD,MAXSTORAGE,THROUGHFALL,RADINTERC,CANOPY_STORE,         &
-                            EVAPSTORE, DRAINSTORE,SURFACE_WATERMM,POREFRAC,WETTINGBOT,WETTINGTOP,NLAYER,NROOTLAYER,     &
-                            LAYTHICK,SOILTK,QE,TAIR(IHOUR) + FREEZE,VPD(IHOUR),WINDAH(IHOUR),ZHT,Z0HT,ZPD,PRESS(IHOUR), &
-                            ETMM,USEMEASET,ETMEAS(IHOUR),FRACUPTAKE,ICEPROP,FRACWATER,DRAINLIMIT,KSAT,BPAR,             &
-                            WSOIL,WSOILROOT,DISCHARGE,DRYTHICKMIN,DRYTHICK,SOILEVAP,OVERFLOW,WATERGAIN,WATERLOSS,       &
-                            PPTGAIN,KEEPWET,EXPINF,WS,WR,NRET,RETFUNCTION)
+                ! Layered water balance, outputs new soil water content, discharge,
+                ! soil evaporation, overflow, thickness of dry layer.
+                CALL WATBALLAY(IDAY,IHOUR,PPT(IHOUR),RUTTERB,RUTTERD,MAXSTORAGE,THROUGHFALL,RADINTERC,CANOPY_STORE,         &
+                                EVAPSTORE, DRAINSTORE,SURFACE_WATERMM,POREFRAC,WETTINGBOT,WETTINGTOP,NLAYER,NROOTLAYER,     &
+                                LAYTHICK,SOILTK,QE,TAIR(IHOUR) + FREEZE,VPD(IHOUR),WINDAH(IHOUR),ZHT,Z0HT,ZPD,PRESS(IHOUR), &
+                                ETMM,USEMEASET,ETMEAS(IHOUR),FRACUPTAKE,ICEPROP,FRACWATER,DRAINLIMIT,KSAT,BPAR,             &
+                                WSOIL,WSOILROOT,DISCHARGE,DRYTHICKMIN,DRYTHICK,SOILEVAP,OVERFLOW,WATERGAIN,WATERLOSS,       &
+                                PPTGAIN,KEEPWET,EXPINF,WS,WR,NRET,RETFUNCTION)
  
-            ! Heat balance: soil T profile (SOILTEMP).
-            IF(USEMEASET.EQ.0.AND.USEMEASSW.EQ.0)THEN
-                CALL HEATBALANCE(NLAYER,FRACWATER,POREFRAC,TAIR(IHOUR)+FREEZE,SOILTK,SOILTEMP,LAYTHICK,WATERGAIN,&
-                                    WATERLOSS,PPTGAIN,THERMCOND)
-            ELSE IF(USEMEASET.EQ.1)THEN
-                ! Do nothing.
-                SOILTEMP = SOILTK
-            ENDIF
+                ! Heat balance: soil T profile (SOILTEMP).
+                IF(USEMEASET.EQ.0.AND.USEMEASSW.EQ.0)THEN
+                    CALL HEATBALANCE(NLAYER,FRACWATER,POREFRAC,TAIR(IHOUR)+FREEZE,SOILTK,SOILTEMP,LAYTHICK,WATERGAIN,&
+                                        WATERLOSS,PPTGAIN,THERMCOND)
+                ELSE IF(USEMEASET.EQ.1)THEN
+                    ! Do nothing.
+                    SOILTEMP = SOILTK
+                ENDIF
            
         
-            ! Output water balance
-            CALL OUTPUTWATBAL(IDAY,IHOUR,NROOTLAYER,NLAYER,WSOIL,                             &
-                              WSOILROOT,PPT(IHOUR),                                           &
-                              CANOPY_STORE,EVAPSTORE,DRAINSTORE,                              &
-                              SURFACE_WATERMM,ETMM,ETMM2,USEMEASET,ETMEAS(IHOUR),DISCHARGE,   &
-                              FRACWATER,WEIGHTEDSWP,KTOT,                                     &
-                              DRYTHICK,SOILEVAP,OVERFLOW,THERMCOND,FRACUPTAKE,SOILMOISTURE,   &
-                              FSOIL1,NSUMMED,TOTTMP,SOILTEMP-FREEZE,                          &
-                              TAIR(IHOUR),QH,QE,QN,QC,RGLOBUND,RGLOBABV,RGLOBABV12,RADINTERC, &
-                              ESOIL, TOTLAI, WTITLE,                                          &
-                              RADINTERC1, RADINTERC2, RADINTERC3,SCLOSTTOT,SOILWP,FRACAPAR)
-
+                ! Output water balance
+                CALL OUTPUTWATBAL(IDAY,IHOUR,NROOTLAYER,NLAYER,WSOIL,                             &
+                                  WSOILROOT,PPT(IHOUR),                                           &
+                                  CANOPY_STORE,EVAPSTORE,DRAINSTORE,                              &
+                                  SURFACE_WATERMM,ETMM,ETMM2,USEMEASET,ETMEAS(IHOUR),DISCHARGE,   &
+                                  FRACWATER,WEIGHTEDSWP,KTOT,                                     &
+                                  DRYTHICK,SOILEVAP,OVERFLOW,THERMCOND,FRACUPTAKE,SOILMOISTURE,   &
+                                  FSOIL1,NSUMMED,TOTTMP,SOILTEMP-FREEZE,                          &
+                                  TAIR(IHOUR),QH,QE,QN,QC,RGLOBUND,RGLOBABV,RGLOBABV12,RADINTERC, &
+                                  ESOIL, TOTLAI, WTITLE,                                          &
+                                  RADINTERC1, RADINTERC2, RADINTERC3,SCLOSTTOT,SOILWP,FRACAPAR)
+                
+                CALL SUMDAILYWAT(WSOIL,WSOILROOT,WEIGHTEDSWP,PPT,ETMM,ETMEAS,DISCHARGE,SOILEVAP,FSOIL1,SURFACE_WATERMM,QH,QE,QN,QC, &
+                                RADINTERC,WSOILMEAN,WSOILROOTMEAN,SWPMEAN,PPTTOT,ETMMTOT,ETMEASTOT,DISCHARGETOT,SOILEVAPTOT,&
+                                FSOILMEAN,TFALLTOT,QHTOT,QETOT,QNTOT,QCTOT,RADINTERCTOT)
+            ENDIF
+            
             ! Output hourly totals
             CALL OUTPUTHR(IDAY+1,IHOUR,NOTARGETS,ITARGETS,ISPECIES,TCAN,NOLAY,PPAR, &
                                 PPS,PTRANSP,FOLLAY,THRAB,FCO2,FRESPF,FRESPW,FRESPB,FH2O,GSCAN,GBHCAN, &
                                 FH2OCAN,FHEAT,VPD,TAIR,UMOLPERJ*RADABV(1:KHRS,1),PSILCAN,PSILCANMIN,CICAN,  &
                                 ECANMAX,ACANMAX,ZEN,AZ)             ! rajout ZEN AZ mathias mars 2013
 
-            CALL SUMDAILYWAT(WSOIL,WSOILROOT,WEIGHTEDSWP,PPT,ETMM,ETMEAS,DISCHARGE,SOILEVAP,FSOIL1,SURFACE_WATERMM,QH,QE,QN,QC, &
-                                RADINTERC,WSOILMEAN,WSOILROOTMEAN,SWPMEAN,PPTTOT,ETMMTOT,ETMEASTOT,DISCHARGETOT,SOILEVAPTOT,&
-                                FSOILMEAN,TFALLTOT,QHTOT,QETOT,QNTOT,QCTOT,RADINTERCTOT)
+
    
     
         !**********************************************************************
@@ -1179,10 +1201,10 @@ PROGRAM maespa
                                 TOTRESPWG,TOTH2O,TOTH2OCAN,TOTHFX,TOTRESPCR,TOTRESPFR,TOTRESPFRG,&
                                 TOTRESPCRG,TOTRESPFG,TOTRESPB,TOTRESPBG)
         
-        
-        CALL OUTPUTDYWAT(IDAY+1,WSOILMEAN,WSOILROOTMEAN,SWPMEAN,PPTTOT,ETMMTOT,ETMEASTOT,DISCHARGETOT,&
-                            SOILEVAPTOT,FSOILMEAN,TFALLTOT,QHTOT,QETOT,QNTOT,QCTOT,RADINTERCTOT)
-        
+        IF(ISMAESPA)THEN
+            CALL OUTPUTDYWAT(IDAY+1,WSOILMEAN,WSOILROOTMEAN,SWPMEAN,PPTTOT,ETMMTOT,ETMEASTOT,DISCHARGETOT,&
+                                SOILEVAPTOT,FSOILMEAN,TFALLTOT,QHTOT,QETOT,QNTOT,QCTOT,RADINTERCTOT)
+        ENDIF
          
         IF(ISIMUS.EQ.1)THEN
             CALL OUTPUTUS(IDAY+1,NOUSPOINTS,XLU,YLU,ZLU,UIBEAM,UIDIFF,PARUS,APARUS,PSUS,ETUS)

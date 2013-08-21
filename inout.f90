@@ -84,9 +84,7 @@ SUBROUTINE OPENINPUTF(CTITLE,TTITLE,PTITLE,STITLE,WTITLE,UTITLE,IWATFILE,KEEPZEN
     USE maestcom
     
     IMPLICIT NONE
-    INTEGER LEN1,IOERROR,IWATFILE,IUSTFILE, KEEPZEN  !, ISUNLA   ! supprimé MAthias 27/11/12
-    !CHARACTER(LEN=*), INTENT(INOUT) ::  CTITLE, TTITLE, PTITLE, STITLE, WTITLE, UTITLE
-    !CHARACTER(LEN=*), INTENT(INOUT) :: in_path, out_path
+    INTEGER LEN1,IOERROR,IWATFILE,IUSTFILE, KEEPZEN  
     CHARACTER(LEN=*) CTITLE, TTITLE, PTITLE, STITLE, WTITLE, UTITLE
     CHARACTER(LEN=*) in_path, out_path
     CHARACTER(LEN=256) :: fin_dir, fout_dir
@@ -134,7 +132,7 @@ SUBROUTINE OPENINPUTF(CTITLE,TTITLE,PTITLE,STITLE,WTITLE,UTITLE,IWATFILE,KEEPZEN
     ! Input file with water balance parameters (RAD)
     OPEN (UWATPARS, FILE = trim(in_path)//'watpars.dat', STATUS='OLD',IOSTAT=IOERROR)      
     IF(IOERROR.NE.0)THEN
-        CALL SUBERROR('WATPARS.DAT NOT FOUND. NO WATER BALANCE SIMULATED.',IWARN,IOERROR)
+        !CALL SUBERROR('WATPARS.DAT NOT FOUND. NO WATER BALANCE SIMULATED.',IWARN,IOERROR)
         IWATFILE = 0
     ELSE
         IWATFILE = 1
@@ -168,17 +166,13 @@ SUBROUTINE OPENINPUTF(CTITLE,TTITLE,PTITLE,STITLE,WTITLE,UTITLE,IWATFILE,KEEPZEN
     ! Read titles from input files
     READ (UTREES, 990) TTITLE
     
-    !WRITE(*,*) TITLE
-    !TTITLE = TTITLE(1:len1)
-    !      READ (USTR, 990) STITLE
-    !      READ (UPHY, 990) PTITLE
     IF(IWATFILE.EQ.1)THEN
         READ (UWATPARS, 990) WTITLE  !RAD
+        WTITLE = TRIM(WTITLE)
     ELSE
         WTITLE = ' '
     ENDIF
-    WTITLE = TRIM(WTITLE)
-   
+    
     RETURN
 END SUBROUTINE OPENINPUTF
 
@@ -187,7 +181,7 @@ END SUBROUTINE OPENINPUTF
 !**********************************************************************
 SUBROUTINE open_output_files(ISIMUS,CTITLE,TTITLE,PTITLE,&
                             STITLE,MTITLE,VTITLE,WTITLE,    &
-                            NSPECIES,SPECIESNAMES,out_path)
+                            NSPECIES,SPECIESNAMES,OUT_PATH,ISMAESPA)
 ! This routine opens the output files.
 ! The filenames are defined in this routine.
 ! It also writes initial comments to the output files.
@@ -197,7 +191,8 @@ SUBROUTINE open_output_files(ISIMUS,CTITLE,TTITLE,PTITLE,&
     IMPLICIT NONE
     INTEGER NSPECIES, IOERROR, DUMMY, ISIMUS
     !CHARACTER(*), INTENT(IN) :: CTITLE,TTITLE,PTITLE,STITLE,MTITLE,WTITLE,VTITLE,out_path
-    CHARACTER(*) :: CTITLE,TTITLE,PTITLE,STITLE,MTITLE,WTITLE,VTITLE,out_path
+    CHARACTER(*) :: CTITLE,TTITLE,PTITLE,STITLE,MTITLE,WTITLE,VTITLE,OUT_PATH
+    LOGICAL ISMAESPA
     CHARACTER SPECIESNAMES(MAXSP)*30
     
     ! Output file with daily fluxes
@@ -244,7 +239,7 @@ SUBROUTINE open_output_files(ISIMUS,CTITLE,TTITLE,PTITLE,&
     END IF
     
     ! Output file for water balance (if requested by setting IOWATBAL = 1 in confile.dat).
-    IF (IOWATBAL.EQ.1 .AND. IOFORMAT .EQ. 0) THEN
+    IF (ISMAESPA .AND. IOFORMAT .EQ. 0) THEN
         CALL open_file(trim(out_path)//'watbal.dat', UWATBAL, 'write', 'asc', 'replace')
         CALL open_file(trim(out_path)//'watlay.dat', UWATLAY, 'write', 'asc', 'replace')
         CALL open_file(trim(out_path)//'swplay.dat', USWPLAY, 'write', 'asc', 'replace')    ! mathias décembre 2012
@@ -252,7 +247,7 @@ SUBROUTINE open_output_files(ISIMUS,CTITLE,TTITLE,PTITLE,&
         !CALL open_file(trim(out_path)//'wattest.dat', UWATTEST, 'write', 'asc', 'replace')
         CALL open_file(trim(out_path)//'watupt.dat', UWATUPT, 'write', 'asc', 'replace')
         CALL open_file(trim(out_path)//'watbalday.dat', UWATDAY, 'write', 'asc', 'replace')   
-    ELSE IF (IOWATBAL.EQ.1 .AND. IOFORMAT .EQ. 1) THEN
+    ELSE IF (ISMAESPA .AND. IOFORMAT .EQ. 1) THEN
         CALL open_file(trim(out_path)//'watbal.bin', UWATBAL, 'write', 'bin', 'replace')
         CALL open_file(trim(out_path)//'watbal.hdr', UWATBALHDR, 'write', 'asc', 'replace')
         CALL open_file(trim(out_path)//'watlay.bin', UWATLAY, 'write', 'bin', 'replace')
@@ -280,14 +275,15 @@ SUBROUTINE open_output_files(ISIMUS,CTITLE,TTITLE,PTITLE,&
     ENDIF
 
     CALL write_header_information(NSPECIES,SPECIESNAMES, &
-                                    CTITLE,TTITLE,PTITLE,STITLE,MTITLE,WTITLE,VTITLE)
+                                    CTITLE,TTITLE,PTITLE,STITLE,MTITLE,WTITLE,VTITLE,ISMAESPA)
 
     RETURN
 END SUBROUTINE open_output_files
 
 !**********************************************************************
 SUBROUTINE write_header_information(NSPECIES,SPECIESNAMES, &
-                                    CTITLE,TTITLE,PTITLE,STITLE,MTITLE,WTITLE,VTITLE)
+                                    CTITLE,TTITLE,PTITLE,STITLE,MTITLE,WTITLE,VTITLE, &
+                                    ISMAESPA)
 !**********************************************************************
 
     USE switches
@@ -299,6 +295,7 @@ SUBROUTINE write_header_information(NSPECIES,SPECIESNAMES, &
     INTEGER NSPECIES
     CHARACTER(*), INTENT(IN) :: CTITLE,TTITLE,PTITLE,STITLE,MTITLE,WTITLE,VTITLE
     CHARACTER SPECIESNAMES(MAXSP)*30
+    LOGICAL ISMAESPA
     
   
     ! write headers to single ascii file
@@ -441,7 +438,7 @@ SUBROUTINE write_header_information(NSPECIES,SPECIESNAMES, &
         END IF
         
         ! Write comments to water balance output file (if required). (RAD).
-        IF (IOWATBAL.EQ.1) THEN
+        IF (ISMAESPA) THEN
             WRITE (UWATBAL, 991) 'Program:                  ', VTITLE
             WRITE (UWATBAL, 992) 'Water balance parameters: ', WTITLE
             WRITE (UWATBAL, 990) '  '
@@ -634,7 +631,7 @@ SUBROUTINE write_header_information(NSPECIES,SPECIESNAMES, &
         END IF
     
         ! Write comments to water balance output file (if required). (RAD).
-        IF (IOWATBAL.EQ.1) THEN
+        IF (ISMAESPA) THEN
             WRITE (UWATBALHDR, 991) 'Program:                  ', VTITLE
             WRITE (UWATBALHDR, 992) 'Water balance parameters: ', WTITLE
             WRITE (UWATBALHDR, 990) '  '
@@ -2017,10 +2014,10 @@ SUBROUTINE OUTPUTHR(IDAY,IHOUR,NOTARGETS,ITARGETS,ISPECIES,         &
                                     THRAB(ITAR,IHOUR,1)*UMOLPERJ,THRAB(ITAR,IHOUR,2),           &
                                     THRAB(ITAR,IHOUR,3),FCO2(ITAR,IHOUR),FRESPF(ITAR,IHOUR),    &
                                     FRESPW(ITAR,IHOUR)+FRESPB(ITAR,IHOUR),                      &
-                                    FH2OT(ITAR,IHOUR)*1e-3,                                     &
+                                    FH2OT(ITAR,IHOUR)*1E-3,                                     &
                                     FH2OCAN(ITAR,IHOUR)*1E-3,GSCAN(ITAR,IHOUR),GBHCAN(ITAR,IHOUR),  &
                                     FHEAT(ITAR,IHOUR)*1E-3,TCAN(ITAR,IHOUR),                    &
-                                    ACANMAX(ITAR,IHOUR),                    &    !10E-3*ECANMAX(ITAR,IHOUR),
+                                    ACANMAX(ITAR,IHOUR),                    &   
                                     PSILCAN(ITAR,IHOUR),PSILCANMIN(ITAR,IHOUR),CICAN(ITAR,IHOUR),  &
                                     TAIR(IHOUR),VPD(IHOUR)/1000,PAR(IHOUR), &
                                     ZEN(IHOUR),AZ(IHOUR)                    !rjout mathias mars 2013
@@ -2033,7 +2030,7 @@ SUBROUTINE OUTPUTHR(IDAY,IHOUR,NOTARGETS,ITARGETS,ISPECIES,         &
                                 FH2OT(ITAR,IHOUR)*1e-3,                                     &
                                 FH2OCAN(ITAR,IHOUR)*1E-3,GSCAN(ITAR,IHOUR),GBHCAN(ITAR,IHOUR),        &
                                 FHEAT(ITAR,IHOUR)*1E-3,TCAN(ITAR,IHOUR),                    &
-                                ACANMAX(ITAR,IHOUR),                    &   !10E-3*ECANMAX(ITAR,IHOUR),
+                                ACANMAX(ITAR,IHOUR),                    &   
                                 PSILCAN(ITAR,IHOUR),PSILCANMIN(ITAR,IHOUR),CICAN(ITAR,IHOUR),  &
                                 TAIR(IHOUR),VPD(IHOUR)/1000,PAR(IHOUR)
             END IF                        
@@ -4710,8 +4707,8 @@ SUBROUTINE INTERPOLATEW(IDAY,ISTART,NOKPDATES,DATESKP,PLANTKTABLE,PLANTK,   &
     REAL PLANTKTABLE(maxdate),PLANTK
     REAL ROOTRAD,ROOTDENS,ROOTMASSTOT,ROOTRADTABLE(maxdate),ROOTDENSTABLE(maxdate),ROOTMASSTOTTABLE(maxdate)
     REAL FRACROOT(maxsoillay),LAYTHICK(maxsoillay),ROOTRESFRAC
-    REAL ROOTXSECAREA, ROOTLEN(maxsoillay),ROOTRESIST, ROOTMASS(maxsoillay)
-
+    REAL ROOTXSECAREA, ROOTLEN(maxsoillay),ROOTRESIST, ROOTMASS(maxsoillay)   
+    
     IF (NOKPDATES.GT.1) THEN
         CALL WATINTERP(IDAY,ISTART,NOKPDATES,DATESKP,PLANTKTABLE,PLANTK)
     ELSE
@@ -4728,7 +4725,7 @@ SUBROUTINE INTERPOLATEW(IDAY,ISTART,NOKPDATES,DATESKP,PLANTKTABLE,PLANTK,   &
     END IF
     
     ! Root cross-sectional area (m2)
-        ROOTXSECAREA = PI*ROOTRAD**2                                   ! maintenant calculé dans INTERPOLATEW !!!!!!!!!!!!
+    ROOTXSECAREA = PI*ROOTRAD**2                                   ! maintenant calculé dans INTERPOLATEW !!!!!!!!!!!!
          
     ! Prepare root mass and length arrays (from SPA, io.f90, RAD).
     ROOTLEN = 0.
@@ -4745,10 +4742,11 @@ SUBROUTINE INTERPOLATEW(IDAY,ISTART,NOKPDATES,DATESKP,PLANTKTABLE,PLANTK,   &
     ROOTRESIST = ROOTRESFRAC * (1./PLANTK)
 
     RETURN
-                        END SUBROUTINE INTERPOLATEW
+END SUBROUTINE INTERPOLATEW
 
 SUBROUTINE INTERPOLATEDIST(IDAY,ISTART,FRACROOTTABLE,NOROOTDATES,DATESROOT,FRACROOT,NROOTLAYER, &
-                                NALPHASPEC,FALPHATABLESPEC,DATESLIA,NOLIADATES,FALPHASPEC,NSPECIES)
+                                NALPHASPEC,FALPHATABLESPEC,DATESLIA,NOLIADATES,FALPHASPEC,NSPECIES, &
+                                ISMAESPA)
 
     USE maestcom
     IMPLICIT NONE
@@ -4757,30 +4755,31 @@ SUBROUTINE INTERPOLATEDIST(IDAY,ISTART,FRACROOTTABLE,NOROOTDATES,DATESROOT,FRACR
     REAL FRACROOTTABLE(maxsoillay,maxdate),FRACROOT(maxsoillay),FRACSUM
     INTEGER NALPHASPEC(maxsp), DATESLIA(maxdate,maxsp),NOLIADATES(maxsp)
     REAL FALPHATABLESPEC(maxang,maxdate,maxsp), FALPHASPEC(maxang, maxsp)
+    LOGICAL ISMAESPA
     
-    IF (NOROOTDATES.GT.1) THEN
-        CALL DISTINTERP(IDAY,ISTART,NOROOTDATES,NROOTLAYER,DATESROOT,FRACROOTTABLE,FRACROOT)
-    ELSE
-        FRACROOT = FRACROOTTABLE(1:MAXSOILLAY,1)
-    END IF
+    IF(ISMAESPA)THEN
+        IF (NOROOTDATES.GT.1) THEN
+            CALL DISTINTERP(IDAY,ISTART,NOROOTDATES,NROOTLAYER,DATESROOT,FRACROOTTABLE,FRACROOT)
+        ELSE
+            FRACROOT = FRACROOTTABLE(1:MAXSOILLAY,1)
+        ENDIF
         
+        CALL FILLWITHLAST(FRACROOT, MAXSOILLAY, NROOTLAYER, -900.0)
+        
+        ! check if it sums to one
+        FRACSUM = SUM(FRACROOT(1:NROOTLAYER))
+                 ! modification mathias décembre 2012
+        FRACROOT = FRACROOT / FRACSUM
+    ENDIF
+    
     DO I = 1,NSPECIES
         IF (NOLIADATES(I).GT.1) THEN
             CALL DISTINTERP2(IDAY,ISTART,NOLIADATES(I),NALPHASPEC(I),DATESLIA(1:maxdate,I),FALPHATABLESPEC(1:maxang,1:maxdate,I), FALPHASPEC(1:maxang,I))
         ELSE
             FALPHASPEC(1:maxang,I) = FALPHATABLESPEC(1:maxang,1,I)
-        END IF
-    
+        ENDIF
     END DO
-       
-            
-    CALL FILLWITHLAST(FRACROOT, MAXSOILLAY, NROOTLAYER, -900.0)
-        ! check if it sums to one
-    FRACSUM = SUM(FRACROOT(1:NROOTLAYER))
-             ! modification mathias décembre 2012
-    FRACROOT = FRACROOT / FRACSUM
-
-
+    
 END SUBROUTINE INTERPOLATEDIST
                         
 SUBROUTINE WATINTERP(IDAY,ISTART,NODATES,IDATEARR,PARAMTABLE,PARAMS)
