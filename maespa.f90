@@ -1049,24 +1049,14 @@ PROGRAM maespa
                     
                 END IF ! If day or night
                
-                !DO 80 IPT = 1,NUMPNT
-                
+               
                 ! No good (does not run for Tumbarumba, and has not been updated since looping order change).
-                !! Calculate non-foliage maintenance respiration (in umol tree-1 s-1)
-                !        FRESPW(ITAR,IHOUR) = RESP(RMW,TAIR(IHOUR),
-                !     &      Q10W,RTEMPW,1.0,TBELOW) 
-                !     &    * WBIOM
-                !        FRESPB(ITAR,IHOUR) = RESP(RMB,TAIR(IHOUR),
-                !     &      Q10B,RTEMPB,1.0,TBELOW) 
-                !     &    * BBIOM
-                !        FRESPFR(ITAR,IHOUR) = RESP(RMFR,TSOIL(IHOUR),
-                !     &      Q10R,RTEMPR,1.0,TBELOW) 
-                !     &    * RBIOM * FRFRAC
-                !        FRESPCR(ITAR,IHOUR) = RESP(RMCR,TSOIL(IHOUR),
-                !     &      Q10R,RTEMPR,1.0,TBELOW) 
-                !     &    * RBIOM * (1. - FRFRAC)
-                
-                !write(*,*)TAIR(IHOUR), TCAN(ITAR,IHOUR)
+                ! Calculate non-foliage maintenance respiration (in umol tree-1 s-1)
+                        FRESPW(ITAR,IHOUR) = RESP(RMW,RMW,TAIR(IHOUR),TAIR(IHOUR),Q10W,0.0,RTEMPW,1.0,TBELOW) * WBIOM
+                        FRESPB(ITAR,IHOUR) = RESP(RMB,RMB,TAIR(IHOUR),TAIR(IHOUR),Q10B,0.0,RTEMPB,1.0,TBELOW) * BBIOM
+                        FRESPFR(ITAR,IHOUR) = RESP(RMFR,RMFR,TSOIL(IHOUR),TAIR(IHOUR),Q10R,0.0,RTEMPR,1.0,TBELOW) * RBIOM * FRFRAC
+                        FRESPCR(ITAR,IHOUR) = RESP(RMCR,RMCR,TSOIL(IHOUR),TAIR(IHOUR),Q10R,0.0,RTEMPR,1.0,TBELOW) * RBIOM * (1. - FRFRAC)
+
          
             END DO ! End loop over trees
             
