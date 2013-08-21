@@ -572,6 +572,10 @@ IMPLICIT NONE
 REAL SWP, VPARA, VPARB, VPARC
 INTEGER VFUN
 
+IF(VFUN.EQ.0)THEN
+    VJMAXWFN = 1
+ENDIF
+
 ! Simple linear dependance. 
 ! VPARA is SWP where Vcmax is zero, VPARB is SWP where Vcmax is one.
 IF(VFUN.EQ.1)THEN
@@ -583,8 +587,13 @@ IF(VFUN.EQ.1)THEN
     ELSE 
         VJMAXWFN =  (SWP - VPARA) / (VPARB - VPARA)
     ENDIF
+ENDIF
 
-
+! As in Zhou, et al. Agricultural and Forest Meteorology. 2013.
+IF(VFUN.EQ.2)THEN
+    
+    VJMAXWFN = (1 + EXP(VPARA*VPARB) )/ (1 + EXP(VPARA*(VPARB-SWP)))
+    
 ENDIF
 
 
