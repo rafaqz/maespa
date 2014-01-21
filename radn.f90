@@ -1902,7 +1902,7 @@ END SUBROUTINE EXDIFF
 ! Norman (1979) says this should be always < 0.5 and preferably closer to 0.1.
 ! Here for LAI < 5, we try DLAI = 0.1
       DLAI = REAL(IFIX(TOTLAI/5.0)+1)*0.1 !! modification Mathias 12/2012
-
+      
 ! Calculate transmittance through one elementary layer with thickness DLAI
 10    KK = 0            ! Initialise variable used to calculate NLAY
       WN = 0.0
@@ -1968,13 +1968,17 @@ END SUBROUTINE EXDIFF
       INTEGER NUMPNT,NLAY,Z1,Z2,IPT,ILAYER
       INTEGER LAYER(MAXP), MLAYER(MAXP)
       REAL RTA(50)
-      REAL TU(MAXP), TD(MAXP),DIFMU,DIFUP,DIFMD,DIFDN
+      REAL TU(MAXP),TD(MAXP),DIFMU,DIFUP,DIFMD,DIFDN
     
 ! Z1 = no of layers above the equivalent layer in the EHC
 ! Z2 = no of layers below the equivalent layer in the EHC
 ! The point h in the horizontal canopy is found by finding Z1 such that
 ! tau(Z1) = TD(IPT) and tau(Z2) = TU(IPT). The point is then at depth
 ! Z1 in a canopy of thickness (Z1 + Z2). (Norman & Welles 1983)
+
+     ! initialize so we can set Z2 if it is not set properly.
+     Z2 = -1
+
 
       DO IPT = 1,NUMPNT
 
@@ -1996,6 +2000,11 @@ END SUBROUTINE EXDIFF
 300     DIFMD = DIFDN
         Z1 = NLAY
 
+        ! Poor fix, but this may help avoid serious problems.
+        IF(Z2.EQ.-1)THEN
+            Z2 = NLAY - Z1
+        ENDIF
+        
 390     MLAYER(IPT) = Z2 + Z1
         LAYER(IPT) = Z1
         IF (LAYER(IPT).EQ.0) LAYER(IPT) = 1
@@ -2475,7 +2484,7 @@ END SUBROUTINE EXDIFF
 ! Jtot is the no. of layers in EHC (+1 for soil layer)
 ! NB the top layer is JTOT, the bottom layer is 1.
       JTOT = MLAYERI
-
+!write(uwattest,*)Jtot
       IF (IWAVE.EQ.3) THEN      ! Call separate subroutine for THERMAL r
         CALL ABSTHERM(IPT,MLAYERI,LAYERI,EXPDIF, &
         RADABV,TAIR,TSOIL,RHOSOL, &
