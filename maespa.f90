@@ -920,7 +920,8 @@ PROGRAM maespa
                                 CALL SUMHR(APAR/UMOLPERJ,ANIR,ATHR,ALEAF,RD,GSC,GBH,ET,HFX,TLEAF,FSOIL,PSIL,CI,AREA,IHOUR,LGP(IPT),ITAR,&
                                             NOTARGETS,NUMPNT,NSUMMED,TOTTMP,PPAR,PPS,PTRANSP,THRAB,FCO2,FRESPF,GSCAN,GBHCAN,FH2O,  &
                                             FHEAT,TCAN,FSOIL1,PSILCAN,PSILCANMIN,CICAN,ECANMAX,ACANMAX)
-                 
+   
+                     
                             END DO ! End loop over age classes
                         ELSE IF ((MODELSS.EQ.2).AND.(FBEAM(IHOUR,1).NE.0.0)) THEN 
                             
@@ -979,6 +980,7 @@ PROGRAM maespa
                     
                     END DO ! End loop over grid points
                     
+
                     ! Calculate transpiration by applying Penman-Monteith to canopy
                     FH2OCAN(ITAR,IHOUR) = ETCAN(WINDAH(IHOUR),ZHT,Z0HT,ZPD,PRESS(IHOUR),TAIR(IHOUR),    &
                                             THRAB(ITAR,IHOUR,1)+THRAB(ITAR,IHOUR,2)+THRAB(ITAR,IHOUR,3),&
@@ -1048,7 +1050,7 @@ PROGRAM maespa
                     END DO
                     
                 END IF ! If day or night
-               
+                    
                
                 ! No good (does not run for Tumbarumba, and has not been updated since looping order change).
                 ! Calculate non-foliage maintenance respiration (in umol tree-1 s-1)
@@ -1057,9 +1059,10 @@ PROGRAM maespa
                         FRESPFR(ITAR,IHOUR) = RESP(RMFR,RMFR,TSOIL(IHOUR),TAIR(IHOUR),Q10R,0.0,RTEMPR,1.0,TBELOW) * RBIOM * FRFRAC
                         FRESPCR(ITAR,IHOUR) = RESP(RMCR,RMCR,TSOIL(IHOUR),TAIR(IHOUR),Q10R,0.0,RTEMPR,1.0,TBELOW) * RBIOM * (1. - FRFRAC)
 
-         
+
             END DO ! End loop over trees
             
+
             ! Do the water balance.
             ! Throughfall, soil evaporation, root water uptake, infiltration of surface water,
             ! gravitational drainage.
@@ -1071,7 +1074,7 @@ PROGRAM maespa
             ! we have to 'unsort' the leaf areas to find all current target tree leaf areas.
             ! This is needed in the SCALEUP routine below.   
 
-            
+
             TARGETFOLS = 0
             DO K=1,NOTARGETS
                 DO I = 1,NOALLTREES                     ! modification Christina March 2013
@@ -1161,7 +1164,7 @@ PROGRAM maespa
                                 RADINTERC,WSOILMEAN,WSOILROOTMEAN,SWPMEAN,PPTTOT,ETMMTOT,ETMEASTOT,DISCHARGETOT,SOILEVAPTOT,&
                                 FSOILMEAN,TFALLTOT,QHTOT,QETOT,QNTOT,QCTOT,RADINTERCTOT)
             ENDIF
-            
+
             ! Output hourly totals
             CALL OUTPUTHR(IDAY+1,IHOUR,NOTARGETS,ITARGETS,ISPECIES,TCAN,NOLAY,PPAR, &
                                 PPS,PTRANSP,FOLLAY,THRAB,FCO2,FRESPF,FRESPW,FRESPB,FH2O,GSCAN,GBHCAN, &
@@ -1170,7 +1173,7 @@ PROGRAM maespa
 
 
    
-    
+       
         !**********************************************************************
         END DO ! End hourly loop
 
@@ -1384,7 +1387,7 @@ SUBROUTINE SUMHR(APAR,ANIR,ATHR,ALEAF,RD,GSC,GBH,ET,HFX,TLEAF,FSOIL, PSIL,CI,   
     PPAR(ITAR,ILAY,IHOUR) = PPAR(ITAR,ILAY,IHOUR) + APAR*UMOLPERJ*AREA
     PPS(ITAR,ILAY,IHOUR) = PPS(ITAR,ILAY,IHOUR) + ALEAF*AREA
     PTRANSP(ITAR,ILAY,IHOUR) = PTRANSP(ITAR,ILAY,IHOUR) + ET*AREA
-
+  
     ! Sum all fluxes for the hour
     THRAB(ITAR,IHOUR,1) = THRAB(ITAR,IHOUR,1) + APAR*AREA
     THRAB(ITAR,IHOUR,2) = THRAB(ITAR,IHOUR,2) + ANIR*AREA

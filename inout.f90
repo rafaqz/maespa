@@ -238,6 +238,8 @@ SUBROUTINE open_output_files(ISIMUS,CTITLE,TTITLE,PTITLE,&
         CALL open_file(trim(out_path)//'resphr.hdr', URESPHRHDR, 'write', 'asc', 'replace')
     END IF
     
+    CALL open_file(trim(out_path)//'wattest.dat', UWATTEST, 'write', 'asc', 'replace')
+    
     ! Output file for water balance (if requested by setting IOWATBAL = 1 in confile.dat).
     IF (ISMAESPA .AND. IOFORMAT .EQ. 0) THEN
         CALL open_file(trim(out_path)//'watbal.dat', UWATBAL, 'write', 'asc', 'replace')
@@ -2004,7 +2006,7 @@ SUBROUTINE OUTPUTHR(IDAY,IHOUR,NOTARGETS,ITARGETS,ISPECIES,         &
     REAL ECANMAX(MAXT,MAXHRS),ACANMAX(MAXT,MAXHRS)
     REAL PSILCAN(MAXT,MAXHRS),PSILCANMIN(MAXT,MAXHRS),CICAN(MAXT,MAXHRS)
     REAL ZEN(MAXHRS), AZ(MAXHRS)
-        
+
     IF (IOHRLY.GE.1) THEN
         DO ITAR=1,NOTARGETS
             ITREE = ITARGETS(ITAR)
@@ -2038,12 +2040,13 @@ SUBROUTINE OUTPUTHR(IDAY,IHOUR,NOTARGETS,ITARGETS,ISPECIES,         &
     END IF
     IF (IOFORMAT .EQ. 0) THEN
         IF (IOHRLY.GE.2) THEN
+
             WRITE (ULAY,610) 'DAY',IDAY,'HOUR',IHOUR
             610   FORMAT (A5,I5,A5,I5)
             IF (FOLLAY(1).GT.0.0) THEN
-                WRITE (ULAY,600) (PPAR(ITAR,I,IHOUR)/FOLLAY(I),I=1,NOLAY)
-                WRITE (ULAY,600) (PPS(ITAR,I,IHOUR)/FOLLAY(I),I=1,NOLAY)
-                WRITE (ULAY,600) (PTRANSP(ITAR,I,IHOUR)/FOLLAY(I),I=1,NOLAY)
+                WRITE (ULAY,600) (PPAR(1,I,IHOUR)/FOLLAY(I),I=1,NOLAY)
+                WRITE (ULAY,600) (PPS(1,I,IHOUR)/FOLLAY(I),I=1,NOLAY)
+                WRITE (ULAY,600) (PTRANSP(1,I,IHOUR)/FOLLAY(I),I=1,NOLAY)
                 600   FORMAT (10(F10.2,1X))
             ELSE
                 WRITE (ULAY,*) 'NO FOLIAGE AT THIS TIME'
@@ -2054,9 +2057,9 @@ SUBROUTINE OUTPUTHR(IDAY,IHOUR,NOTARGETS,ITARGETS,ISPECIES,         &
             WRITE (ULAY) REAL(IDAY),REAL(IHOUR)
         
             IF (FOLLAY(1).GT.0.0) THEN
-                WRITE (ULAY) (PPAR(ITAR,I,IHOUR)/FOLLAY(I),I=1,NOLAY)
-                WRITE (ULAY) (PPS(ITAR,I,IHOUR)/FOLLAY(I),I=1,NOLAY)
-                WRITE (ULAY) (PTRANSP(ITAR,I,IHOUR)/FOLLAY(I),I=1,NOLAY)
+                WRITE (ULAY) (PPAR(1,I,IHOUR)/FOLLAY(I),I=1,NOLAY)
+                WRITE (ULAY) (PPS(1,I,IHOUR)/FOLLAY(I),I=1,NOLAY)
+                WRITE (ULAY) (PTRANSP(1,I,IHOUR)/FOLLAY(I),I=1,NOLAY)
             ELSE
                 ! No foliage at this time
                 WRITE (ULAY) -999.9
