@@ -2117,7 +2117,7 @@ SUBROUTINE OUTPUTDY(IDAY,NOTARGETS,ITARGETS,ISPECIES,TDYAB,             &
         END DO
     END IF
     
-    IF (IORESP.EQ.1 .AND. IORESP .EQ. 0) THEN
+    IF (IORESP.EQ.1 .AND. IOFORMAT .EQ. 0) THEN
         DO ITAR=1,NOTARGETS
             ITREE = ITARGETS(ITAR)
             ISPEC = ISPECIES(ITREE)
@@ -2126,9 +2126,9 @@ SUBROUTINE OUTPUTDY(IDAY,NOTARGETS,ITARGETS,ISPECIES,TDYAB,             &
                                 TOTRESPCR(ITAR),TOTRESPFR(ITAR),TOTRESPFG,      &
                                 TOTRESPWG,TOTRESPBG,                            &
                                 TOTRESPCRG,TOTRESPFRG
-            510   FORMAT (I7,1X,I4,1X,10(F12.5,1X))
+            510   FORMAT (I7,1X,I4,1X,I4,1X,10(F10.5,1X))
         END DO
-    ELSE IF (IORESP.EQ.1 .AND. IORESP .EQ. 1) THEN
+    ELSE IF (IORESP.EQ.1 .AND. IOFORMAT .EQ. 1) THEN
         DO ITAR=1,NOTARGETS
             ITREE = ITARGETS(ITAR)
             ISPEC = ISPECIES(ITREE)
