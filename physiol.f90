@@ -331,10 +331,13 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
     END IF
 
     ! Calculate soil moisture modifying factor
-    !FSOIL = CALCFSOIL(WSOILMETHOD,SOILMOISTURE,SOILDATA,SMD1,SMD2,WC1,WC2,SWPEXP)
-
-    ! Stomatal conductance: Calculation varies according to the stomatal model chosen.
-        FSOIL = 1.0 ! init
+    ! MAESPA uses Emax approach, or Tuzet. MAESTRA calculates it various ways based on input data.
+    IF(.NOT.ISMAESPA)THEN
+        FSOIL = CALCFSOIL(WSOILMETHOD,SOILMOISTURE,SOILDATA,SMD1,SMD2,WC1,WC2,SWPEXP)
+    ELSE
+        FSOIL = 1.0
+    ENDIF
+    
         
         ! Note that MODELGS=5 is not implemented (but it is in Maestra).
         IF (MODELGS.EQ.2) THEN

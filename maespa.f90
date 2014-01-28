@@ -105,7 +105,7 @@ PROGRAM maespa
                     SFSPEC,PSIVSPEC,VPARASPEC,VPARBSPEC,VPARCSPEC,VFUNSPEC,in_path)
     
     ! Cannot use Tuzet with MAESTRA (because plantk is in watpars.dat!)
-    IF(ISMAESPA.AND.MODELGS.EQ.6)THEN
+    IF(.NOT.ISMAESPA.AND.MODELGS.EQ.6)THEN
         CALL SUBERROR('Error: Cannot use Tuzet model in MAESTRA. Use MAESPA!', IFATAL, 0)
     ENDIF
     
