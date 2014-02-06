@@ -3,7 +3,7 @@
 ## Martin De Kauwe, 05/12/2013
 ##
 
-PROG =	maespa
+PROG =	maespa.out
 
 SRCS =	default_conditions.f90 switches.f90 getmet.f90 maindeclarations.f90 \
         inout.f90 maespa.f90 maestcom.f90 metcom.f90 physiol.f90 \
