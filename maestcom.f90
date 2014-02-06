@@ -20,8 +20,8 @@ MODULE maestcom
     INTEGER, PARAMETER :: MAXMET = 20         ! Maximum columns in met data file
     INTEGER, PARAMETER :: MAXHISTO = 200      ! Maximum bins in PAR histogram
     REAL, PARAMETER    :: TOL = 0.02          ! Tolerance for leaf temp iteration
-    INTEGER, PARAMETER :: MAXDAY =   900        ! For sumtrees program
-    INTEGER, PARAMETER :: MAXHRS = 48         ! Maximum number of time periods in a day (ie 15 mins)
+    INTEGER, PARAMETER :: MAXDAY =   900      ! For sumtrees program
+    INTEGER, PARAMETER :: MAXHRS = 24*60      ! Maximum number of time periods in a day (ie 15 mins)
     INTEGER, PARAMETER :: MAXSTP = 10000      ! For ODEINT (Utils.for)
     INTEGER, PARAMETER :: NMAX = 4            ! "
     INTEGER, PARAMETER :: KMAXX = 200         ! "
