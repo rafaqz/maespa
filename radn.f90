@@ -596,7 +596,7 @@
       REAL XL(MAXP),YL(MAXP),ZL(MAXP),VL(MAXP),AX(MAXP/4),CZ(MAXP/4)
       REAL FOLLAY(MAXLAY),AXPOINTS(MAXP/4),HORIZ(MAXP/4), ARG1, ARG2
       REAL HTINT,RX2,RXNTR,RY2,RYNTR,RXY
-      REAL CORR,HDN,VLM,HUP,FOLNTR,SHAPE
+      REAL CORR,HDN,VLM,HUP,FOLNTR,SHAPE, CORR2
       REAL RZNTR,DXTNTR,DYTNTR,ZBCNTR,DZTNTR,AVGSD
       REAL CORFL,DOWN,UP,VERT
       REAL, EXTERNAL :: SURFACE
@@ -641,10 +641,21 @@
         ! calculate relative radial distance - differs in odd & even layers
         ! The function 'surface' finds relative radial distance to crown surface as function of relative height
         IF(MOD(LAYER,2).EQ.1) THEN
-            CORR = SURFACE(CZ(IPQ),JSHAPE)
+          CORR = SURFACE(CZ(IPQ),JSHAPE)
         ELSE
-            ! Multiply by cos 45°
-            CORR = 0.5*SQRT(2.0)*SURFACE(CZ(IPQ),JSHAPE)
+      ! Modified by A. Morales on March 2012
+          ! Multiply by cos 45 or Rx/Rxy (i.e. cos angle between Rx and Rxy) for boxes
+          IF(JSHAPE.EQ.JBOX) THEN
+             CORR = RXNTR/RXY*SURFACE(CZ(IPQ),JSHAPE)
+      ! Modified by A. Morales on March 2012
+      ! Y coordinates != X coordinates in even layers
+       CORR2 = RYNTR/RXNTR
+          ELSE
+             CORR = 0.5*SQRT(2.0)*SURFACE(CZ(IPQ),JSHAPE)
+      ! Modified by A. Morales on March 2012
+      ! Y coordinates = X coordinates in even layers
+       CORR2 = 1
+        ENDIF 
         ENDIF
 
         ! Factors come from assuming volume of each gridpoint is equal
@@ -684,9 +695,9 @@
           XL(IPQ2)=-AX(IPQ1)*RXY+DXTNTR
           XL(IPQ3)= XL(IPQ2)
           XL(IPQ4)= XL(IPQ1)
-          YL(IPQ1)= AX(IPQ1)*RXY+DYTNTR
+          YL(IPQ1)= AX(IPQ1)*RXY*CORR2+DYTNTR
           YL(IPQ2)= YL(IPQ1)
-          YL(IPQ3)=-AX(IPQ1)*RXY+DYTNTR
+          YL(IPQ3)=-AX(IPQ1)*RXY*CORR2+DYTNTR
           YL(IPQ4)= YL(IPQ3)
         ENDIF
         ZL(IPQ1)=CZ(IPQ1)*RZNTR+ZBCNTR+DZTNTR
