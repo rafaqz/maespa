@@ -885,7 +885,7 @@ SUBROUTINE ASSIGNRAIN(TOTAL,PPT)
 !**********************************************************************
 
 !	USE MSFLIB        ! Library required by COMPAQ VISUAL FORTRAN - superseded
-!  USE IFPORT        ! Library required by Intel Visual Fortran 
+    USE IFPORT        ! Library required by Intel Visual Fortran 
     USE maestcom
     
     IMPLICIT NONE
