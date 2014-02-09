@@ -478,9 +478,9 @@ PROGRAM maespa
                             DIFSKY,XL,YL,ZL,RX,RY,RZ,DXT,DYT,DZT,XMAX,YMAX,SHADEHT,FOLT,ZBC,JLEAFT,BPTT,NOAGECT,PROPCT, &
                             JSHAPET,SHAPET,NEWTUTD,TU,TD,RELDF,DEXT)
 
-                TUAR(ITAR, 1:NUMPNT) = TU
-                TDAR(ITAR, 1:NUMPNT) = TD
-                RELDFAR(ITAR, 1:NUMPNT) = RELDF
+                TUAR(ITAR, 1:NUMPNT) = TU(1:NUMPNT)
+                TDAR(ITAR, 1:NUMPNT) = TD(1:NUMPNT)
+                RELDFAR(ITAR, 1:NUMPNT) = RELDF(1:NUMPNT)
 
             END DO  ! End precalculate diffuse transmittance.
             
@@ -513,9 +513,9 @@ PROGRAM maespa
                 ITREE = ITARGETS(ITAR)
                 
                 ! Read diffuse transmittance from precalculated array
-                TU = TUAR(ITAR, 1:NUMPNT)
-                TD = TDAR(ITAR, 1:NUMPNT)
-                RELDF = RELDFAR(ITAR, 1:NUMPNT)
+                TU(1:NUMPNT) = TUAR(ITAR, 1:NUMPNT)
+                TD(1:NUMPNT) = TDAR(ITAR, 1:NUMPNT)
+                RELDF(1:NUMPNT) = RELDFAR(ITAR, 1:NUMPNT)
 
                 ! Assign arrays.
                 ISPEC = ISPECIES(ITREE)
@@ -622,8 +622,10 @@ PROGRAM maespa
                 G1TABLE = G1TABLESPEC(1:maxdate,ISPEC)
                 WLEAFTABLE = WLEAFTABLESPEC(1:maxdate,ISPEC)
                 GK = GKSPEC(ISPEC)
-                DATESGS = DATESGSSPEC(1:MASPDATE,ISPEC)
-                DATESWLEAF = DATESWLEAFSPEC(1:MASPDATE,ISPEC)
+                !DATESGS = DATESGSSPEC(1:MASPDATE,ISPEC)
+                DATESGS = DATESGSSPEC(1:maxdate,ISPEC)
+                !DATESWLEAF = DATESWLEAFSPEC(1:MASPDATE,ISPEC)
+                DATESWLEAF = DATESWLEAFSPEC(1:maxdate,ISPEC)
                 NOGSDATES= NOGSDATESSPEC(ISPEC)
                 NOWLEAFDATES= NOWLEAFDATESSPEC(ISPEC)
                 D0L = D0LSPEC(ISPEC)          

@@ -4066,7 +4066,7 @@ SUBROUTINE READCONTREES(UFILE,NOALLTREES,DX,DY,XMAX,YMAX,&
 ! Trees within EDGEDIST m of the plot edges are exempted.
 !**********************************************************************
 
-    USE IFPORT    ! For Intel Visual Fortran - allows use of random function
+!    USE IFPORT    ! For Intel Visual Fortran - allows use of random function
     USE maestcom
     IMPLICIT NONE
     INTEGER ITARGETS(MAXT),ITARGETSI(MAXT)
