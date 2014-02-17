@@ -4066,7 +4066,7 @@ SUBROUTINE READCONTREES(UFILE,NOALLTREES,DX,DY,XMAX,YMAX,&
 ! Trees within EDGEDIST m of the plot edges are exempted.
 !**********************************************************************
 
-    USE IFPORT    ! For Intel Visual Fortran - allows use of random function
+!    USE IFPORT    ! For Intel Visual Fortran - allows use of random function
     USE maestcom
     IMPLICIT NONE
     INTEGER ITARGETS(MAXT),ITARGETSI(MAXT)
@@ -4114,7 +4114,7 @@ SUBROUTINE READCONTREES(UFILE,NOALLTREES,DX,DY,XMAX,YMAX,&
         IF (NORANDOM.GT.NOALLTREES) CALL SUBERROR('TOO MANY TARGET TREES SPECIFIED', IFATAL,0)
         NOTARGETS = NORANDOM
         DO IRAN = 1,NORANDOM
-30          RANVAL = RAND(IFLAG)
+30          CALL RANDOM_NUMBER(RANVAL)
             RANVAL = RANVAL*REAL(NOALLTREES+1)
             ITREE = NINT(RANVAL)
             IF (ITREE.EQ.0) ITREE = 1

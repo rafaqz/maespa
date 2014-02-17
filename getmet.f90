@@ -885,7 +885,7 @@ SUBROUTINE ASSIGNRAIN(TOTAL,PPT)
 !**********************************************************************
 
 !	USE MSFLIB        ! Library required by COMPAQ VISUAL FORTRAN - superseded
-    USE IFPORT        ! Library required by Intel Visual Fortran 
+ !   USE IFPORT        ! Library required by Intel Visual Fortran 
     USE maestcom
     
     IMPLICIT NONE
@@ -903,7 +903,7 @@ SUBROUTINE ASSIGNRAIN(TOTAL,PPT)
       
     ! 1. All rain falls in one hour for light storms (<2 mm)
     IF (TOTAL.LE.2.) THEN
-        RANVAL = RAND(IFLAG)   ! randomly select hour
+        CALL RANDOM_NUMBER(RANVAL)   ! randomly select hour
         IRAIN = INT(RANVAL*KHRS)+1
         PPT(IRAIN) = TOTAL
     ! 2. All rain falls in 24 hours for storms >46 mm 
@@ -917,7 +917,7 @@ SUBROUTINE ASSIGNRAIN(TOTAL,PPT)
         IHRSWITHRAIN = MIN(INT((TOTAL/2)*KHRS/24),KHRS)
         RATE = TOTAL/REAL(IHRSWITHRAIN)
         DO I = 1, IHRSWITHRAIN
-            RANVAL = RAND(IFLAG)   ! randomly select hours
+            CALL RANDOM_NUMBER(RANVAL)   ! randomly select hours
             IRAIN = INT(RANVAL*KHRS)+1
             PPT(IRAIN) = PPT(IRAIN)+RATE
         END DO
