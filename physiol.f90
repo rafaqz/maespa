@@ -1201,6 +1201,7 @@ REAL FUNCTION PSILOBJFUN(PSILIN, EXTRAPARS, EXTRAINT)
         integer iday,ihour
         REAL EXTRAPARS(EXTRAPARDIM)
         INTEGER EXTRAINT(10)
+        LOGICAL EXTRALOGIC(10)
 
           IECO = EXTRAINT(1)
           MODELGS = EXTRAINT(2)
@@ -1267,9 +1268,8 @@ REAL FUNCTION PSILOBJFUN(PSILIN, EXTRAPARS, EXTRAINT)
           VPDMIN = EXTRAPARS(54)
           GK = EXTRAPARS(55)
           
-          ISMAESPA = .FALSE.
-!        iday = -1
-!        ihour = -1
+          ISMAESPA = .TRUE.
+
         MINLEAFWP = 0  ! Not used in tuzet.
         CI = 0
         KTOT = 0  ! output, not needed.
