@@ -1040,10 +1040,10 @@ END SUBROUTINE EXDIFF
         XL,YL,ZL,RX,RY,RZ,DXT,DYT,DZT, &
         XMAX,YMAX,SHADEHT, &
         FOLT,ZBC,JLEAFT,BPTT,NOAGECT,PROPCT,JSHAPET,SHAPET, &
-        NEWTUTD,TU,TD,RELDF,DEXT )! dext now output.
+        NEWTUTD,TU,TD,RELDF,DEXT )
+      
 ! This subroutine calculates the diffuse transmittances, if required.
 !**********************************************************************
-
 
       USE maestcom
       IMPLICIT NONE
@@ -1135,7 +1135,7 @@ END SUBROUTINE EXDIFF
             CALL TREDST(IFLAG,IPROG,IRAD,DZUP,DAZ, &
                XL(IPT),YL(IPT),ZL(IPT),RX,RY,RZ,DXT,DYT,DZT, &
                FOLT,ZBC,JLEAFT,BPTT,NOAGECT,PROPCT,JSHAPET,SHAPET, &
-               DEXTT(1:MAXT,J),NT,SU,SU1,DEXT(J),DEXTANGT,DEXTANG)!! DEXT is output!! DEXTANG=0 not used
+               DEXTT(1:MAXT,J),NT,SU,SU1,DEXT(J),DEXTANGT,DEXTANG)
 
             ADDUP = ADDUP + EXP(-DEXT(J)*(SU+SU1))
 
@@ -1144,7 +1144,7 @@ END SUBROUTINE EXDIFF
             CALL TREDST(IFLAG,IPROG,IRAD,DZDN,DAZ, &
                XL(IPT),YL(IPT),ZL(IPT),RX,RY,RZ,DXT,DYT,DZT, &
                FOLT,ZBC,JLEAFT,BPTT,NOAGECT,PROPCT,JSHAPET,SHAPET, &
-               DEXTT(1:MAXT,J),NT,SL,SL1,DEXT(J),DEXTANGT,DEXTANG)  !! DEXT is output!!  !modification mathias mars 2013
+               DEXTT(1:MAXT,J),NT,SL,SL1,DEXT(J),DEXTANGT,DEXTANG) 
 
             ADDDN = ADDDN + EXP(-DEXT(J)*(SL+SL1))
 
@@ -1196,12 +1196,17 @@ END SUBROUTINE EXDIFF
       REAL TANAZ,SINAZ,S,S1,SW,S1W,DAZ
       REAL SWANG(MAXANG),S1WANG(MAXANG),SSWANG(MAXANG)
       REAL PATH, XTPOS, YTPOS, XPT,YPT,DZ,ZPT,X1,Y1,Z1
-      REAL X2,Y2,Z2,AVGDL,SS,SSW,EFFK
+      REAL X2,Y2,Z2,AVGDL,SS,SSW,EFFK,OLDEFFK
       REAL EXTCANG(MAXT,MAXANG),EFFKANG(MAXANG)
       LOGICAL, EXTERNAL :: POSSIBLE
 
       TANAZ = TAN(DAZ)
       SINAZ = SIN(DAZ)
+
+      
+! Remember old value of 'EFFK' (effective extinction coefficient). This is the average across trees,
+! when TREDST is called from TRANSD (as it exclusively is). 
+      OLDEFFK = EFFK
 
 ! Zero the pathlengths.
 ! S1 is distance in target tree, S is distance in other trees.
@@ -1262,8 +1267,8 @@ END SUBROUTINE EXDIFF
            S1 = S1 + SS
            S1W = S1W + SSW
            S1WANG = S1WANG + SSWANG(1:MAXANG)
-        END IF
-
+        END IF        
+        
 200   CONTINUE
 
 ! Calculate weighted effective extinction coefficient.
@@ -1271,7 +1276,7 @@ END SUBROUTINE EXDIFF
         EFFK = (S1W + SW) / (S + S1)
         EFFKANG = (S1WANG + SWANG) / (S + S1)
       ELSE
-        EFFK = 0.0
+        EFFK = OLDEFFK
         EFFKANG = 0.0
       ENDIF
 
@@ -2398,6 +2403,7 @@ END SUBROUTINE EXDIFF
         XMAX,YMAX,SHADEHT, &
         FOLT,ZBC,JLEAFT,BPTT,NOAGECT,PROPCT,JSHAPET,SHAPET, &
         NT,SLA,BEXT,BEXTANGT,BEXTANG)
+      
 ! a subroutine to calculate the transmittances of direct radiation
 ! and also the within and between-tree shading for beam
 !**********************************************************************

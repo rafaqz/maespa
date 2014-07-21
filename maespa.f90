@@ -64,7 +64,7 @@ PROGRAM maespa
    
     ! Open input files
     CALL OPENINPUTF(CTITLE,TTITLE,PTITLE,STITLE,WTITLE,UTITLE,IWATFILE, &
-                    KEEPZEN,IUSTFILE,in_path,out_path)
+                    KEEPZEN,IUSTFILE,IPOINTS,in_path,out_path)
    
     ! Decide whether to simulate the water balance (MAESPA) or not (MAESTRA)    
     IF(IWATFILE .EQ. 0)THEN
@@ -145,6 +145,13 @@ PROGRAM maespa
                         RDT,SLAUS,EFFY,MOSS,JMAX25M,VCMAX25M,THETAM)
     ENDIF
     
+    ! Read MAESTEST input file.
+    ! Open files and read information about points
+    IF(IPOINTS .EQ. 1)THEN
+      CALL GETPOINTSF(NUMTESTPNT,XLP,YLP,ZLP,X0,Y0,XMAX,YMAX, &
+         CTITLE,TTITLE,MTITLE,STITLE,VTITLE)
+    ENDIF
+      
     ! Initialize various variables related to water balance calculations.
     IF(ISMAESPA)THEN
     CALL INITWATBAL(LAYTHICK,WETTINGBOT,WETTINGTOP,POREFRAC,WATERGAIN,WATERLOSS,PPTGAIN,    &
@@ -465,6 +472,68 @@ PROGRAM maespa
                                 FOLT(1),PROPC,PROPP, &
                                 BPT,NOAGEC,NOAGEP, XL,YL,ZL,VL,DLT,DLI,LGP,FOLLAY)
             
+                
+                
+                ! Do Maestest calculations (only once - when the loop is at the first tree (ITAR), and on the first day).
+                RANPOINTS = 0
+                IF(IPOINTS.EQ.1.AND.RANPOINTS.EQ.0)THEN
+   
+                        ! Sort trees to middle of test points (has no real effect at the moment; since all trees in the plot are used).
+                        AX = AVERAGEVAL(XLP,NUMTESTPNT)
+                        AY = AVERAGEVAL(YLP,NUMTESTPNT)
+
+                        ! Use *all trees* as target trees for the test points.
+                        IPROGCUR = ITEST
+                        NOTREESTEST = NOALLTREES
+
+                        !! Sort overstorey dimensions, save in separate arrays.
+                        !! Can move this out of loop, only needs to be done once.
+                        CALL SORTTREESP( &
+                         AX,AY,NOALLTREES,NOTREES, &  ! NOTREES no longer used in SORTTREESP
+                         DXT1,DYT1,DZT1,RXTABLE1,RYTABLE1,RZTABLE1, &
+                         ZBCTABLE1,FOLTABLE1,DIAMTABLE1, &
+                         DXTP,DYTP,DZTP,RXTABLEP,RYTABLEP,RZTABLEP, &
+                         FOLTABLEP,ZBCTABLEP,DIAMTABLEP,ISPECIES,ISPECIESTP,ITP)
+    
+                        ! Interpolate overstorey dimensions for use in test point calcs.
+                        CALL INTERPOLATET(IDAY,ISTART,1, &
+                         NOXDATES,DATESX,RXTABLEP,NOYDATES,DATESY,RYTABLEP, &
+                         NOZDATES,DATESZ,RZTABLEP,NOTDATES,DATEST,ZBCTABLEP, &
+                         NODDATES,DATESD,DIAMTABLEP, &
+                         NOLADATES,DATESLA,FOLTABLEP,TOTLAITABLE,NOTREESTEST, &
+                         RXP,RYP,RZP,ZBCP,FOLTP,TOTLAI,DIAM,STOCKING, &
+                         IFLUSH,DT1,DT2,DT3,DT4,EXPTIME,APP,EXPAN, &
+                         NEWCANOPY,CANOPYDIMS)
+     
+                        ! Make tree arrays of radiation-extinction related parameters,
+                        ! that may vary between species.
+                       DO I = 1,NOTREESTEST
+                        JSHAPETP(I) = JSHAPESPEC(ISPECIESTP(I))
+                        SHAPETP(I) = SHAPESPEC(ISPECIESTP(I))
+                        DEXTTP(I,1:MAXANG) = DEXTSPEC(ISPECIESTP(I),1:MAXANG)
+                        JLEAFTP(I) = JLEAFSPEC(ISPECIESTP(I))
+                        NOAGECTP(I) = NOAGECSPEC(ISPECIESTP(I))
+                        BPTTP(1:8,1:MAXC,I) = BPTSPEC(1:8,1:MAXC,ISPECIESTP(I))
+                        PROPPTP(1:MAXC,I) = PROPPSPEC(1:MAXC,ISPECIESTP(I))
+                        PROPCTP(1:MAXC,I) = PROPCSPEC(1:MAXC,ISPECIESTP(I))
+                       ENDDO
+
+                       CALL TRANSD( &
+                        IDAY,IOTUTD,NEWCANOPY,IPROGCUR,NOTREESTEST,XSLOPE,YSLOPE, &
+                        NZEN,DIFZEN,NAZ,NUMTESTPNT,DEXTTP,DIFSKY, &
+                        XLP,YLP,ZLP,RXP,RYP,RZP,DXTP,DYTP,DZTP, &
+                        XMAX,YMAX,SHADEHT, &
+                        FOLTP,ZBCP,JLEAFTP,BPTTP,NOAGECTP,PROPCTP,JSHAPETP,SHAPETP, &
+                        NEWTUTD,TUP,TDP,RELDFP,DEXTP)
+      
+                        CALL EHC(NUMTESTPNT,TUP,TDP, &
+                         TOTLAI,XSLOPE,YSLOPE,NAZ,NZEN,DIFZEN,DEXTP, &
+                         DLAIP,EXPDIFP,LAYERP,MLAYERP &
+                       )     
+                       RANPOINTS = 1
+                    
+                ENDIF  ! MAESTEST (Diffuse calculations)
+                
                 ! Output xyz coordinates of crown grid points.
                 ! This is actually useful; might make this an output option.
                 ! Note in R: require(rgl);plot3d(x,y,z) can plot the points nicely...
@@ -814,7 +883,62 @@ PROGRAM maespa
                         CALL SUMHRUS(IHOUR,NOUSPOINTS,GRDAREAI,AREAUS,PARUS,PARUSMEAN,PARUSSD,APARUS,PSUS,ETUS,THRABUS,&
                                     FCO2US,FH2OUS)
                     ENDIF ! Understorey calculations
-                          
+                    
+                    ! Output PAR transmittance for test points.
+                    IF(IPOINTS.EQ.1)THEN      
+                        DO IPTEST = 1,NUMTESTPNT
+          
+                        IPROGCUR = ITEST
+
+                        DO I=1,NOTREESTEST
+                            BEXTTP(I) = BEXTSPEC(ISPECIESTP(I))
+                            BEXTANGTP(I,1:MAXANG) = BEXTANGSPEC(ISPECIESTP(I),1:MAXANG)
+                        ENDDO
+
+                        CALL TRANSB(IHOUR,IPROGCUR, &
+                                ZEN(IHOUR),AZ(IHOUR),XSLOPE,YSLOPE,FBEAM,BEXTTP, &
+                                XLP(IPTEST),YLP(IPTEST),ZLP(IPTEST),RXP,RYP,RZP,DXTP,DYTP,DZTP, &
+                                XMAX,YMAX,SHADEHT, &
+                                FOLTP,ZBCP,JLEAFTP,BPTTP,NOAGECTP,PROPCTP,JSHAPETP,SHAPETP, &
+                                NOTREESTEST,SUNLAP,BEXTP,BEXTANGTP,BEXTANGP)
+
+                        IWAVE = 1 !(As in original MAESTEST, use only PAR.
+                        CALL SCATTER(IPTEST,IWAVE, &
+                                MLAYERP(IPTEST),LAYERP(IPTEST),DLAIP,EXPDIFP, &
+                                ZEN(IHOUR),BEXTP, &
+                                DMULT2,SOMULT,BMULT, &
+                                RADABV(IHOUR,IWAVE),FBEAM(IHOUR,IWAVE), &
+                                TAIR(IHOUR),TSOIL(IHOUR), &
+                                ARHO(1,IWAVE),ATAU(1,IWAVE), &    ! Note 1 here instead of LGP().
+                                RHOSOL(IWAVE), &
+                                DIFUP,DIFDN,SCLOST,THDOWNP)
+
+                        CALL ABSRAD(IPTEST,IWAVE, &
+                                NZEN,DEXT,BEXT,BMULT,RELDFP(IPTEST), &
+                                RADABV(IHOUR,IWAVE),FBEAM(IHOUR,IWAVE),ZEN(IHOUR), &
+                                ABSRP(1,IWAVE),DIFDN(IPTEST,IWAVE), &
+                                DIFUP(IPTEST,IWAVE), &
+                                DFLUX,BFLUX,SCATFX)
+
+                        ! Output transmittances
+                        PAR = RADABV(IHOUR,1)*UMOLPERJ
+                        TBEAM = FBEAM(IHOUR,IWAVE)*PAR*SUNLAP
+                        TDIFF = (1-FBEAM(IHOUR,IWAVE))*PAR*TDP(IPTEST)
+                        TSCAT = DIFDN(IPTEST,IWAVE)
+                        TTOT = TBEAM + TDIFF + TSCAT
+      
+                        APARSUN = (BFLUX(IPTEST,1)*BEXTP + DFLUX(IPTEST,1))*UMOLPERJ
+                        APARSH = DFLUX(IPTEST,1)*UMOLPERJ
+                        APARMEAN = SUNLAP * APARSUN + (1-SUNLAP)*APARSH
+
+                        WRITE (UPOINTSO,501) IDAY,IHOUR,IPTEST,XLP(IPTEST),YLP(IPTEST),ZLP(IPTEST), &
+                            PAR,FBEAM(IHOUR,1),SUNLAP,TDP(IPTEST),TSCAT,TTOT,APARSUN,APARSH,APARMEAN
+501                         FORMAT(3(I5,1X),12(F12.5,1X))
+                            
+                        ENDDO  
+                    ENDIF  !MAESTEST          
+   
+                    
                     ! Loop over grid points
                     DO IPT = 1,NUMPNT
                         ! Calculate the weighted pathlengths for beam radiation.

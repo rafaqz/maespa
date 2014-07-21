@@ -76,7 +76,7 @@
 
 !**********************************************************************
 SUBROUTINE OPENINPUTF(CTITLE,TTITLE,PTITLE,STITLE,WTITLE,UTITLE,IWATFILE,KEEPZEN, &
-                      IUSTFILE,in_path,out_path)
+                      IUSTFILE,IPOINTSI, in_path,out_path)
 ! This routine opens the input files.
 ! The filenames are defined in this routine.
 !**********************************************************************
@@ -84,14 +84,14 @@ SUBROUTINE OPENINPUTF(CTITLE,TTITLE,PTITLE,STITLE,WTITLE,UTITLE,IWATFILE,KEEPZEN
     USE maestcom
     
     IMPLICIT NONE
-    INTEGER LEN1,IOERROR,IWATFILE,IUSTFILE, KEEPZEN  
+    INTEGER LEN1,IOERROR,IWATFILE,IUSTFILE, KEEPZEN, IPOINTSI,IPOINTS
     CHARACTER(LEN=*) CTITLE, TTITLE, PTITLE, STITLE, WTITLE, UTITLE
     CHARACTER(LEN=*) in_path, out_path
     CHARACTER(LEN=256) :: fin_dir, fout_dir
     LOGICAL EXT
     
     ! Modified RAD
-    NAMELIST /CONTROL/ IOHRLY,IOTUTD,IOHIST,IORESP,IOWATBAL,IOFORMAT,ISUNLA,KEEPZEN
+    NAMELIST /CONTROL/ IOHRLY,IOTUTD,IOHIST,IORESP,IOWATBAL,IOFORMAT,ISUNLA,KEEPZEN,IPOINTS
     NAMELIST /flocations/ fin_dir, fout_dir   ! MGDK
     
     990 FORMAT (A80)     ! For reading titles in input files.
@@ -119,10 +119,12 @@ SUBROUTINE OPENINPUTF(CTITLE,TTITLE,PTITLE,STITLE,WTITLE,UTITLE,IWATFILE,KEEPZEN
     
     ! Default
     KEEPZEN = 0 
+    IPOINTS = 0
     
     READ (UCONTROL, CONTROL, IOSTAT = IOERROR)
     IF (IOERROR.NE.0) CALL SUBERROR('WARNING: USING DEFAULT VALUES FOR CONTROL FILE', IWARN, IOERROR)  
-
+    IPOINTSI = IPOINTS
+    
     ! Input file with data on tree position and size
     OPEN (UTREES, FILE = trim(in_path)//'trees.dat', STATUS='OLD', IOSTAT=IOERROR)
     IF (IOERROR.NE.0) THEN
@@ -4619,6 +4621,7 @@ SUBROUTINE INTERPOLATET(IDAY, ISTART, IHOUR,                            &
                         RX,RY,RZ,ZBC,FOLT,TOTLAI,DIAM,STOCKING,         &
                         IFLUSH,DT1,DT2,DT3,DT4,EXPTIME,APP,EXPAN,       &
                         NEWCANOPY,CANOPYDIMS)
+
 ! RAD change
 ! Controls the calling of the interpolation routines to get daily values
 ! of crown heights and radii and leaf area.
@@ -5057,5 +5060,130 @@ SUBROUTINE open_file(fname, unit, action, file_format, status)
         WRITE(*,*) 'Error opening file, dont understand the format:', TRIM(file_format)
     END SELECT
 
-END SUBROUTINE open_file
+    END SUBROUTINE open_file
+
+    
+    
+!**********************************************************************
+      SUBROUTINE GETPOINTSF(NUMTESTPNT,XL,YL,ZL,X0,Y0,XMAX,YMAX, &
+        CTITLE,TTITLE,MTITLE,STITLE,VTITLE)
+! Subroutine for testing radiation interception routines.
+! Open input & output files and read information about sensor positions.
+!**********************************************************************
+
+      USE maestcom
+      IMPLICIT NONE
+      INTEGER NOPOINTS,INPUTTYPE,IOERROR,NUMTESTPNT,N,I
+      
+      CHARACTER*80 CTITLE, TTITLE, PTITLE, STITLE, MTITLE, VTITLE
+      REAL XL(MAXP),YL(MAXP),ZL(MAXP),COORDS(MAXP*3)
+      REAL X0,Y0,ANGLE,SPACING,ZHEIGHT,COSANG,SINANG,DIST
+      REAL XMAX,YMAX
+
+      NAMELIST /CONTROL/ NOPOINTS,INPUTTYPE
+      NAMELIST /XYZ/ COORDS
+      NAMELIST /TRANSECT/ ANGLE,SPACING,ZHEIGHT
+
+! Open input file
+      OPEN (UPOINTSI, FILE = 'points.dat', STATUS = 'OLD', &
+         IOSTAT=IOERROR)
+      
+      IF (IOERROR.NE.0) &
+        CALL SUBERROR('ERROR: POINTS INPUT FILE DOES NOT EXIST', &
+        IFATAL,IOERROR)
+
+! Read title from input file
+990   FORMAT (A60)     ! For reading titles in input files.
+      READ (UPOINTSI, 990) PTITLE
+
+! Default values
+      NOPOINTS = 0
+      INPUTTYPE = 1
+
+! Read control flags: no of points and type of input
+      READ (UPOINTSI, CONTROL, IOSTAT = IOERROR)
+      IF ((IOERROR.NE.0).OR.(NOPOINTS.EQ.0)) &
+        CALL SUBERROR('ERROR: MISSING CONTROL INFO IN POINTS FILE', &
+        IFATAL,IOERROR)
+      IF (NOPOINTS.GT.MAXP) THEN
+        CALL SUBERROR('WARNING: TOO MANY TEST POINTS SPECIFIED', &
+        IWARN,IOERROR)
+        NUMTESTPNT = MAXP
+      ELSE 
+        NUMTESTPNT = NOPOINTS
+      END IF
+
+! Read in list of points
+      IF (INPUTTYPE.EQ.1) THEN
+        READ (UPOINTSI, XYZ, IOSTAT = IOERROR)
+        IF (IOERROR.NE.0) &
+        CALL SUBERROR('ERROR READING GRID POINTS', &
+        IFATAL,IOERROR)
+        DO  N = 1,NUMTESTPNT
+          XL(N) = COORDS((N-1)*3 + 1) - X0
+          YL(N) = COORDS((N-1)*3 + 2) - Y0
+          ZL(N) = COORDS(N*3)
+        ENDDO
+
+! Read in details of transect & construct points
+      ELSE IF (INPUTTYPE.EQ.2) THEN
+        READ (UPOINTSI, TRANSECT, IOSTAT = IOERROR)
+        IF (IOERROR.NE.0) &
+          CALL SUBERROR('ERROR READING TRANSECT DETAILS', &
+          IFATAL,IOERROR)
+        ANGLE = ANGLE*PID180
+        COSANG = COS(ANGLE)
+        SINANG = SIN(ANGLE)
+        DIST = SPACING/2.0
+        DO N = 1,NUMTESTPNT
+          XL(N) = DIST*COSANG
+          YL(N) = DIST*SINANG
+          ZL(N) = ZHEIGHT
+          DIST =  DIST + SPACING
+        ENDDO
+      END IF
+  
+      DO I = 1,NUMTESTPNT
+         IF( (XL(I).LT.X0.OR.XL(I).GT.XMAX) .OR. (YL(I).LT.Y0.OR.YL(I).GT.YMAX) ) THEN
+            CALL SUBERROR('WARNING: MAESTEST MAY CRASH WHEN POINTS ARE OUTSIDE PLOT BOUNDS. & 
+                FIX POINTS.DAT IF INFINITE LOOP OCCURS!', IWARN, -1)
+         ENDIF
+      ENDDO
+  
+! Open output file
+      OPEN (UPOINTSO, FILE = 'testflx.dat', STATUS = 'UNKNOWN')
+! Write headings to output file
+991   FORMAT (A12,A60) ! For writing comments to output files.
+992   FORMAT (1X,3(A3,1X),9(A12,1X))
+993   FORMAT (A60)
+994   FORMAT (A90)
+
+      WRITE (UPOINTSO, 991) 'Program:    ', VTITLE
+      WRITE (UPOINTSO, 991) 'Control:    ', CTITLE
+      WRITE (UPOINTSO, 991) 'Trees:      ', TTITLE
+      !WRITE (UPOINTSO, 991) 'Structure:  ', STITLE
+      WRITE (UPOINTSO, 991) 'Points:     ', PTITLE
+      WRITE (UPOINTSO, 991) 'Met data:   ', MTITLE
+      WRITE (UPOINTSO, *)
+      WRITE (UPOINTSO, 993) 'DAY: day number'
+      WRITE (UPOINTSO, 993) 'HR: hour number'
+      WRITE (UPOINTSO, 993) 'PT: point number'
+      WRITE (UPOINTSO, 993) 'X,Y,Z, : coordinates of test point'
+      WRITE (UPOINTSO, 993) 'PAR: incident PAR (umol m-2 s-1)'
+      WRITE (UPOINTSO, 993) 'FBEAM: beam fraction of PAR'
+      WRITE (UPOINTSO, 993)  &
+        'SUNLA: sunlit leaf area at grid point (fraction)'
+      WRITE (UPOINTSO, 993) &
+         'TD: diffuse transmittance to grid point (fraction)'
+      WRITE (UPOINTSO, 993) 'TSCAT: scattered radiation (umol m-2 s-1)'
+      WRITE (UPOINTSO, 993) 'TTOT: total radiation (umol m-2 s-1)'
+      WRITE (UPOINTSO, 993) 'APARSUN : Absorped PAR for sunlit foliage (umol m-2 s-1)'
+      WRITE (UPOINTSO, 993) 'APARSH : Absorped PAR for shaded foliage (umol m-2 s-1)'
+      WRITE (UPOINTSO, 993) 'APAR : Absorped PAR (umol m-2 s-1)'
+      WRITE(UPOINTSO,993)' '
+      WRITE (UPOINTSO,994)'DAY HR PT  X  Y  Z  PAR  FBEAM   SUNLA  TD   TSCAT  TTOT APARSUN APARSH APAR ' 
+
+      RETURN
+      END ! GetPointsF
+
 
