@@ -19,7 +19,7 @@ INCLS =
 
 F90 = gfortran
 
-FFLAGS = -fbounds-check -finit-local-zero -Wuninitialized -ftrapv -ffree-form -ffree-line-length-none -O3
+FFLAGS = -g -fbounds-check -finit-local-zero -Wuninitialized -ftrapv -ffree-form -ffree-line-length-none -O3
 
 all: $(PROG)
 
