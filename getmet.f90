@@ -178,7 +178,7 @@ SUBROUTINE OPENMETF(ISTART,IEND,CAK,PRESSK,SWMIN,SWMAX,USEMEASET,DIFSKY,ALAT,TTI
             ELSEIF (COLUMNS(I).EQ.'ET')  THEN
                 ICOL = MDET
             ELSE
-                STOP 'ERROR: Header incorrectly specified in Met file'  
+                CALL SUBERROR('ERROR: Header incorrectly specified in Met file',IFATAL,0) 
             ENDIF
             
             IF (ICOL.NE.MISSING) METCOLS(ICOL) = I
@@ -232,7 +232,7 @@ SUBROUTINE OPENMETF(ISTART,IEND,CAK,PRESSK,SWMIN,SWMAX,USEMEASET,DIFSKY,ALAT,TTI
             ELSEIF (COLUMNS(I).EQ.'SWP')  THEN
                 ICOL = MHSWP
             ELSE
-                STOP 'ERROR: Header incorrectly specified in Met file'  
+                CALL SUBERROR('ERROR: Header incorrectly specified in Met file',IFATAL,0) 
             ENDIF
             
             IF (ICOL.NE.MISSING) METCOLS(ICOL) = I
