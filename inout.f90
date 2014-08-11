@@ -275,7 +275,8 @@ SUBROUTINE open_output_files(ISIMUS,CTITLE,TTITLE,PTITLE,&
     ENDIF
 
     CALL write_header_information(NSPECIES,SPECIESNAMES, &
-                                    CTITLE,TTITLE,PTITLE,STITLE,MTITLE,WTITLE,VTITLE,ISMAESPA)
+                                  CTITLE,TTITLE,PTITLE,STITLE, &
+                                  MTITLE,WTITLE,VTITLE,ISMAESPA,ISIMUS)
 
     RETURN
 END SUBROUTINE open_output_files
@@ -283,16 +284,14 @@ END SUBROUTINE open_output_files
 !**********************************************************************
 SUBROUTINE write_header_information(NSPECIES,SPECIESNAMES, &
                                     CTITLE,TTITLE,PTITLE,STITLE,MTITLE,WTITLE,VTITLE, &
-                                    ISMAESPA)
+                                    ISMAESPA,ISIMUS)
 !**********************************************************************
 
     USE switches
     USE maestcom
     
     IMPLICIT NONE
-    INTEGER I
-    !INTEGER, INTENT(IN) :: NSPECIES
-    INTEGER NSPECIES
+    INTEGER I,NSPECIES,ISIMUS
     CHARACTER(*), INTENT(IN) :: CTITLE,TTITLE,PTITLE,STITLE,MTITLE,WTITLE,VTITLE
     CHARACTER SPECIESNAMES(MAXSP)*30
     LOGICAL ISMAESPA
@@ -499,6 +498,24 @@ SUBROUTINE write_header_information(NSPECIES,SPECIESNAMES, &
             WRITE (UWATDAY, 990) '  '
             WRITE (UWATDAY, 457)
         END IF
+        
+        IF(ISIMUS.EQ.1)THEN
+            WRITE(UPARUS, 991) 'Program:                  ', VTITLE
+            WRITE(UPARUS, 990) '  '
+            WRITE(UPARUS, 201)
+            WRITE (UWATDAY, 990) '  '
+            WRITE(UPARUS, 203)
+            WRITE(UPARUS, 204)
+            WRITE(UPARUS, 205)
+            WRITE(UPARUS, 206)
+            WRITE(UPARUS, 207)
+            WRITE(UPARUS, 208)
+            WRITE(UPARUS, 209)
+            WRITE (UWATDAY, 990) '  '
+            WRITE(UPARUS, 202)
+        ENDIF
+        
+        
     ! write headers to a .hdr file, binary out
     ELSE IF (IOFORMAT .EQ. 1) THEN      
         ! Write headings to daily flux file
@@ -827,9 +844,20 @@ SUBROUTINE write_header_information(NSPECIES,SPECIESNAMES, &
     455 FORMAT('qc: soil heat transport                     MJ m-2 day-1')
     456 FORMAT('radinterc: total radiation intercepted      MJ m-2 day-1')
 
-    457 FORMAT('Columns: day wsoil wsoilroot swp ppt &
+457     FORMAT('Columns: day wsoil wsoilroot swp ppt &
               &tfall et etmeas discharge soilevap &
               &fsoil qh qe qn qc radinterc')
+        
+201           FORMAT('Understorey simulation results by timestep and point')
+202           FORMAT('Columns: day hour point X Y Z PARbeam PARdiffuse PARtotal APAR hrPSus hrETus')
+203           FORMAT('day : day of simulation (1,2,etc.)')
+204           FORMAT('hour: timestep (1,2,etc.)')
+205           FORMAT('X,Y,Z: spatial coordinates of understorey test point (m)')
+206           FORMAT('PARbeam, PARdiffuse, PARtot : PAR reaching the top of the understorey, in direct, diffuse or total (mu mol m-2 s-1)')
+207           FORMAT('APAR : absorbed PAR by the understorey (mu mol m-2 s-1) ')
+208           FORMAT('hrPSus : photosynthesis for the understorey point (mu mol m-2 s-1)')            
+209           FORMAT('hrETus : transpiration for the understorey point (If zero it is not calculated) (mmol m-2 s-1)')
+
     
 END SUBROUTINE write_header_information
 

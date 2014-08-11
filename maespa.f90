@@ -43,9 +43,6 @@ PROGRAM maespa
     
     IMPLICIT NONE
     REAL, EXTERNAL :: AVERAGEVAL,CALCRMW,TK,ETCAN,RESP,GRESP
-    
-    VTITLE = 'MAESPA: version May 2013'
-    VTITLE = VTITLE(1:LEN_TRIM(VTITLE))
    
     ! Set program flag
     IPROG = INORMAL
@@ -73,6 +70,13 @@ PROGRAM maespa
        ISMAESPA = .TRUE.
     ENDIF
     
+    IF(ISMAESPA)THEN
+        VTITLE = 'MAESPA'
+    ELSE
+        VTITLE = 'MAESTRA'
+    ENDIF
+    VTITLE = VTITLE(1:LEN_TRIM(VTITLE))
+   
     ! Get input from control file
     CALL INPUTCON(ISTART, IEND, NSTEP,NUMPNT, NOLAY, PPLAY, NZEN, DIFZEN, NAZ,      &
                     MODELGS, MODELJM, MODELRD, MODELSS, MODELRW, ITERMAX, IOHIST,   &
