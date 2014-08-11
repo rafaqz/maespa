@@ -76,7 +76,7 @@
 
 !**********************************************************************
 SUBROUTINE OPENINPUTF(CTITLE,TTITLE,PTITLE,STITLE,WTITLE,UTITLE,IWATFILE,KEEPZEN, &
-                      IUSTFILE,IPOINTSI, in_path,out_path)
+                      IPOINTSI,ISIMUSI, in_path,out_path)
 ! This routine opens the input files.
 ! The filenames are defined in this routine.
 !**********************************************************************
@@ -84,14 +84,14 @@ SUBROUTINE OPENINPUTF(CTITLE,TTITLE,PTITLE,STITLE,WTITLE,UTITLE,IWATFILE,KEEPZEN
     USE maestcom
     
     IMPLICIT NONE
-    INTEGER LEN1,IOERROR,IWATFILE,IUSTFILE, KEEPZEN, IPOINTSI,IPOINTS
+    INTEGER LEN1,IOERROR,IWATFILE, KEEPZEN, IPOINTSI,IPOINTS,ISIMUS,ISIMUSI
     CHARACTER(LEN=*) CTITLE, TTITLE, PTITLE, STITLE, WTITLE, UTITLE
     CHARACTER(LEN=*) in_path, out_path
     CHARACTER(LEN=256) :: fin_dir, fout_dir
     LOGICAL EXT
     
     ! Modified RAD
-    NAMELIST /CONTROL/ IOHRLY,IOTUTD,IOHIST,IORESP,IOWATBAL,IOFORMAT,ISUNLA,KEEPZEN,IPOINTS
+    NAMELIST /CONTROL/ IOHRLY,IOTUTD,IOHIST,IORESP,IOWATBAL,IOFORMAT,ISUNLA,KEEPZEN,IPOINTS,ISIMUS
     NAMELIST /flocations/ fin_dir, fout_dir   ! MGDK
     
     990 FORMAT (A80)     ! For reading titles in input files.
@@ -124,6 +124,7 @@ SUBROUTINE OPENINPUTF(CTITLE,TTITLE,PTITLE,STITLE,WTITLE,UTITLE,IWATFILE,KEEPZEN
     READ (UCONTROL, CONTROL, IOSTAT = IOERROR)
     IF (IOERROR.NE.0) CALL SUBERROR('WARNING: USING DEFAULT VALUES FOR CONTROL FILE', IWARN, IOERROR)  
     IPOINTSI = IPOINTS
+    ISIMUSI = ISIMUS
     
     ! Input file with data on tree position and size
     OPEN (UTREES, FILE = trim(in_path)//'trees.dat', STATUS='OLD', IOSTAT=IOERROR)
@@ -134,33 +135,28 @@ SUBROUTINE OPENINPUTF(CTITLE,TTITLE,PTITLE,STITLE,WTITLE,UTITLE,IWATFILE,KEEPZEN
     ! Input file with water balance parameters (RAD)
     OPEN (UWATPARS, FILE = trim(in_path)//'watpars.dat', STATUS='OLD',IOSTAT=IOERROR)      
     IF(IOERROR.NE.0)THEN
-        !CALL SUBERROR('WATPARS.DAT NOT FOUND. NO WATER BALANCE SIMULATED.',IWARN,IOERROR)
         IWATFILE = 0
     ELSE
         IWATFILE = 1
     ENDIF
     
     ! Input/output file with diffuse transmittances
-      OPEN (UTUTD, FILE = 'tutd.dat', STATUS='UNKNOWN')  
+    OPEN (UTUTD, FILE = 'tutd.dat', STATUS='UNKNOWN')  
        
     ! Input file for understorey parameters.
-    
     ! Or if filename is missing:
     INQUIRE (FILE=trim(in_path)//'USTOREY.DAT', EXIST=EXT)
-    
     IF(.NOT.EXT)THEN
         CALL SUBERROR('USTOREY.DAT NOT FOUND. NO UNDERSTOREY SIMULATED.',IWARN,IOERROR)
-        IUSTFILE = 0
-    ELSE
-        IUSTFILE = 1
+        ISIMUSI = 0
     ENDIF
     
     IF(EXT)THEN 
         OPEN(USTOREYI, FILE=trim(in_path)//'ustorey.dat', STATUS='UNKNOWN',IOSTAT=IOERROR)
     ENDIF
       
-    IF(IUSTFILE.EQ.1.AND.IOERROR.EQ.0)THEN
-        UTITLE = ' ' !READ (USTOREYI, 990) UTITLE
+    IF(ISIMUS.EQ.1.AND.IOERROR.EQ.0)THEN
+        UTITLE = ' ' !READ (USTOREYI, 990) UTITLE  ! Why removed?
     ELSE
         UTITLE = ' '
     ENDIF
@@ -921,9 +917,9 @@ END SUBROUTINE CLOSEF
 SUBROUTINE INPUTCON(ISTART, IEND, NSTEP,                                    &
                     NUMPNT,NOLAY,PPLAY,NZEN,DIFZEN,NAZ,                     &
                     MODELGS, MODELJM, MODELRD, MODELSS, MODELRW, ITERMAX,   &
-                    IOHIST, BINSIZE, ICC, CO2INC, TINC,            &
+                    IOHIST, BINSIZE, ICC, CO2INC, TINC,                     &
                     IOTC, TOTC, WINDOTC, PAROTC, FBEAMOTC,                  &
-                    IWATFILE, IUSTFILE, ISIMUS,                             &
+                    IWATFILE,                            &
                     NSPECIES, SPECIESNAMES, PHYFILES, STRFILES)
 ! Read in the information from the control file.
 !**********************************************************************
@@ -934,7 +930,7 @@ SUBROUTINE INPUTCON(ISTART, IEND, NSTEP,                                    &
     REAL DIFZEN(MAXANG)
     INTEGER PPLAY,ISTART,IEND,NSTEP,NUMPNT,NOLAY,PPLY,NZEN,NAZ,MODELGS
     INTEGER MODELJM,MODELRD,MODELSS,MODELRW,ITERMAX,NSPECIES
-    INTEGER ISIMUS,IUSTFILE,IOTC,IOHIST,IWATFILE,ICC
+    INTEGER IOTC,IOHIST,IWATFILE,ICC
     CHARACTER SPECIESNAMES(MAXSP)*30
     CHARACTER PHYFILES(MAXSP)*30
     CHARACTER STRFILES(MAXSP)*30
@@ -945,10 +941,7 @@ SUBROUTINE INPUTCON(ISTART, IEND, NSTEP,                                    &
     CALL READDATES(UCONTROL, ISTART, IEND, NSTEP)
     CALL READSPECIES(UCONTROL, NSPECIES, SPECIESNAMES,PHYFILES, STRFILES)
     CALL READZEN(UCONTROL, NUMPNT, NOLAY, PPLAY, NZEN, NAZ, DIFZEN)
-    CALL READMODEL(UCONTROL, MODELGS, MODELJM, MODELRD,MODELSS, MODELRW, ITERMAX, ISIMUS)
-    
-    ! Don't simulate water balance or understorey if files missing.
-    IF(IUSTFILE.EQ.0)ISIMUS = 0
+    CALL READMODEL(UCONTROL, MODELGS, MODELJM, MODELRD,MODELSS, MODELRW, ITERMAX)
     CALL READHIST(UCONTROL,IOHIST,BINSIZE)
     CALL READCCSCEN(UCONTROL,ICC,CO2INC,TINC)
     CALL READOTC(UCONTROL,IOTC,TOTC,WINDOTC,PAROTC,FBEAMOTC)
@@ -2989,7 +2982,7 @@ END SUBROUTINE READBETA
 
 !**********************************************************************
 SUBROUTINE READMODEL(UFILE, GSMODI, JMMODI, RDMODI, &
-                    SSMODI, RWMODI, ITERMAXI, ISIMUSI)
+                    SSMODI, RWMODI, ITERMAXI)
 ! Read in flags which control the physiological models used.
 ! MODELGS - controls model of stomatal conductance
 ! MODELJM - whether JMAX,VCMAX read in (0) or calculated from leaf N (1)
@@ -3003,10 +2996,10 @@ SUBROUTINE READMODEL(UFILE, GSMODI, JMMODI, RDMODI, &
     IMPLICIT NONE
     INTEGER UFILE,GSMODI,JMMODI,RDMODI,SSMODI,RWMODI,ITERMAXI
     INTEGER MODELGS,MODELJM,MODELRD,MODELRW,MODELSS
-    INTEGER ITERMAX,ISIMUS,IOERROR,ISIMUSI
+    INTEGER ITERMAX,IOERROR
     
     NAMELIST /MODEL/ MODELGS,MODELJM,MODELRD,MODELRW, &
-                        MODELSS,ITERMAX,ISIMUS
+                        MODELSS,ITERMAX
     
 
     ! Default values
@@ -3016,7 +3009,6 @@ SUBROUTINE READMODEL(UFILE, GSMODI, JMMODI, RDMODI, &
     MODELRW = 0     ! RW values read in directly
     MODELSS = 0     ! sunlit & shade calculations separate
     ITERMAX = 0     ! The leaf temperature is not calculated
-    ISIMUS = 0      ! No understorey simulation (RAD).
 
     ! Read file
     REWIND (UFILE)
@@ -3030,7 +3022,6 @@ SUBROUTINE READMODEL(UFILE, GSMODI, JMMODI, RDMODI, &
     JMMODI = MODELJM
     SSMODI = MODELSS
     ITERMAXI = ITERMAX
-    ISIMUSI = ISIMUS
 
     RETURN
 END SUBROUTINE READMODEL

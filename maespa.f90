@@ -64,7 +64,7 @@ PROGRAM maespa
    
     ! Open input files
     CALL OPENINPUTF(CTITLE,TTITLE,PTITLE,STITLE,WTITLE,UTITLE,IWATFILE, &
-                    KEEPZEN,IUSTFILE,IPOINTS,in_path,out_path)
+                    KEEPZEN,IPOINTS,ISIMUS,in_path,out_path)
    
     ! Decide whether to simulate the water balance (MAESPA) or not (MAESTRA)    
     IF(IWATFILE .EQ. 0)THEN
@@ -77,7 +77,7 @@ PROGRAM maespa
     CALL INPUTCON(ISTART, IEND, NSTEP,NUMPNT, NOLAY, PPLAY, NZEN, DIFZEN, NAZ,      &
                     MODELGS, MODELJM, MODELRD, MODELSS, MODELRW, ITERMAX, IOHIST,   &
                     BINSIZE,ICC, CO2INC, TINC,IOTC, TOTC, WINDOTC, PAROTC,          &
-                    FBEAMOTC, IWATFILE, IUSTFILE, ISIMUS, NSPECIES, SPECIESNAMES,   &
+                    FBEAMOTC, IWATFILE, NSPECIES, SPECIESNAMES,   &
                     PHYFILES, STRFILES )
     
     ! Get input from canopy structure file
