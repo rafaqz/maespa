@@ -834,16 +834,17 @@ PROGRAM maespa
                
                             TDIFF = (1-FBEAM(IHOUR,1))*PAR*TDUS(IPTUS)
                             TSCAT = 0 !DIFDN(IPTUS,1)*UMOLPERJ
-                
+                  
+                            ! Recalculate sunlit leaf area (TRANSB returns it but that is at a point just above the understorey,
+                            ! not sunlit leaf area for the understorey canopy (since IPROG=ITEST).
+                            ! From Campbell&Norman (2000, p. 259)
+                            SUNLA = (1 - EXP(-EXTKUS*USLAI(IPTUS)))/EXTKUS
+                                  
                             ! PAR at all understorey points, diffuse, direct, and total.
                             UIBEAM(IHOUR,IPTUS) = FBEAM(IHOUR,1)*PAR*SUNLA
                             UIDIFF(IHOUR,IPTUS) = TDIFF + TSCAT
                             PARUS(IHOUR,IPTUS) = UIDIFF(IHOUR,IPTUS) + UIBEAM(IHOUR,IPTUS)
-               
-                            ! Global radiation to understorey points
-                            !NIRUS(IHOUR,IPTUS) = FBEAM(IHOUR,1)*RADABV(IHOUR,1)*SUNLA
-               
-               
+                            
                             ! Get parameters of BEWDY model
                             CALL BEWDYPARMS(IHOUR,TAIR(IHOUR),RH(IHOUR),CA(IHOUR),JMAXN25,IECOU,EAVJU,EDVJU,DELSJU, &
                                             TVJUPU,TVJDNU,VCMAXN25,EAVCU,EDVCU,DELSCU,AJQU,GSBG0U,GSBG1U,CICARAT,   &
@@ -856,9 +857,9 @@ PROGRAM maespa
                                 GSIPT = 0.0
                                 ETUS = 0.0
                             ELSE
+                                
                                 ! Otherwise call BEWDY model to calculate understorey photosynthesis
                                 !! Note UIBEAM is divided by SUNLA, gets back-converted in BEWDY subr.
-                
                                 IF(SUNLA.GT.0.0) THEN
                                     BEAMP = UMOLPERJ*UIBEAM(IHOUR,IPTUS)/SUNLA
                                 ELSE    
