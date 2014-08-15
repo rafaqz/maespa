@@ -1,0 +1,84 @@
+******* Sample USTOREY File *******
+
+&CONTROL
+NOUSPOINTS = 1000
+X0 = 0
+XMAX = 100
+Y0 = 20
+YMAX = 60
+/
+
+&ALLHTCROWN
+NODATES = 1
+VALUES = 0.25
+DATES = '01/01/98'
+/
+
+&ALLUSLAI
+NODATES = 1																	
+VALUES = 0.91
+DATES = '01/01/98'
+/
+
+&LIA					
+ELP = 1.0					
+NALPHA = 5					
+/					
+
+&PHYCON
+C4FRAC = 0.5
+/
+
+&JMAXPARS
+IECO = 0
+AJQ = 0.054
+eavj = 43790
+edvj = 200000
+delsj = 644.4338
+/
+
+&VCMAXPARS
+eavc = 51560
+/
+
+&BEWDYPARS
+JMAX25 = 17.1
+VCMAX25 = 12.5
+UNMIN =0.0
+ABSRP = 0.85
+/
+
+&CICA
+CICARAT = 0.7
+/
+
+&ALLFOLN
+NODATES = 1
+VALUES =  1.0
+DATES = '01/01/98'
+/
+
+&BBGS
+G0 = 0.03
+G1 = 6
+/
+
+&RDPARS
+RD = 0.36
+RDK = 0.0693
+RDT = 20
+/
+
+&USC4PARS
+VCMAXC4 = 40
+CICAC4 = 0.5
+EAVCC4 = 67294.0
+EDVCC4 = 144568.0
+DELSCC4 = 472.0
+/
+
+
+
+
+
+
