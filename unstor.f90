@@ -205,7 +205,7 @@ SUBROUTINE INPUTUSPHY(JMAXN25I,IECOUI,EAVJI,EDVJI,DELSJI,TVJUPI,TVJDNI,        &
 
     ! Read in stomatal conductance params (Ball-Berry model only or Ci:Ca ratio)
     REWIND (UFILE)
-    CICARATI = 0.7
+    CICARATI = 0.0
     READ (UFILE, CICA,IOSTAT = IOERROR)
     IF (IOERROR.EQ.0) THEN
         CICARATI = CICARAT
@@ -463,9 +463,9 @@ SUBROUTINE PSMOSS(APAR,TLEAF,RH,CA,JMAX25,IECO,EAVJ,EDVJ,DELSJ,TVJUP,TVJDN,&
     
 !**********************************************************************
  SUBROUTINE COLLATZC4(VCMAX25, TAIR, TVJUP, TVJDN, DELSC, EAVC, EDVC,  &
-                       DIFF, SUNLA, BEAM, ABSRP, KEXT, LAI, CI,        &
-                       APAR, PS)
-!     
+                       DIFF, SUNLA, BEAM, ABSRP, KEXT, LAI, CICA, CA,   &
+                       APAR, PS, GS)
+!
 ! Calculates assimilation using the Collatz C4 model. 
 !
 ! References
@@ -499,11 +499,11 @@ SUBROUTINE PSMOSS(APAR,TLEAF,RH,CA,JMAX25,IECO,EAVJ,EDVJ,DELSJ,TVJUP,TVJDN,&
     ! quantium efficiency for C4 plants has no Ci and temp dependancy
     REAL, PARAMETER :: alphac4 = 0.06          
     
-    REAL, INTENT(IN) :: CI
+    REAL, INTENT(IN) :: CICA,CA
     REAL, INTENT(IN) :: VCMAX25, TAIR, TVJUP, TVJDN, DELSC, EAVC, EDVC
     REAL, INTENT(IN) :: DIFF, SUNLA, BEAM, ABSRP, KEXT, LAI
     
-    REAL, INTENT(OUT) :: PS, APAR
+    REAL, INTENT(OUT) :: PS, APAR, GS
     
     !REAL, PARAMETER :: EAVC = 67294.0
     !REAL, PARAMETER :: EDVC = 144568.0
@@ -511,7 +511,9 @@ SUBROUTINE PSMOSS(APAR,TLEAF,RH,CA,JMAX25,IECO,EAVJ,EDVJ,DELSJ,TVJUP,TVJDN,&
     
     ! Intermediate vars.    
     INTEGER :: IOERROR
-    REAL :: M, VCMAX
+    REAL :: M, VCMAX, CI
+    
+    CI = CICA * CA
     
     APAR = (DIFF + SUNLA * BEAM) * ABSRP * (1.0 - EXP(-KEXT * LAI))
     
@@ -526,7 +528,10 @@ SUBROUTINE PSMOSS(APAR,TLEAF,RH,CA,JMAX25,IECO,EAVJ,EDVJ,DELSJ,TVJUP,TVJDN,&
      
     ! The limitation of the overall rate by M and CO2 limited flux:
     PS = QUADM(beta2, -(M + kslope * CI), (M * kslope * CI), IOERROR)
-                          
+    
+    ! Stomatal conductance, using CI
+    GS = PS/(CA-CI)
+    
     RETURN
 END SUBROUTINE COLLATZC4    
 

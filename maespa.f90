@@ -869,31 +869,46 @@ PROGRAM maespa
                                     CALL BEWDY(IHOUR,BEAMP,UMOLPERJ*UIDIFF(IHOUR,IPTUS),SUNLA,BALPHA,BLAMBDA,FN0US(IPTUS),  &
                                             UNMIN,EXTKUS,ABSRPU,USLAI(IPTUS), APARUS(IHOUR,IPTUS),PSC3,                 &
                                             PARUNDER(IHOUR,IPTUS))
+                                    
+                                    ! Stomatal conductance and transpiration - estimated at whole-clump level, mol CO2 m-2 s-1
+                                    IF(GSBG1U.GT.0.0)THEN
+                                        GSIPT = GSBG0U + GSBG1U* PSC3 * RH(IHOUR)/CA(IHOUR) 
+                                    ELSE
+                                        GSIPT = PSC3/(CA(IHOUR) - CICARAT*CA(IHOUR))
+                                    ENDIF
+                                
+                                    ! mmol H2O m-2 s-1
+                                    ETC3 = GSIPT*GSVGSC*VPD(IHOUR)/PRESS(IHOUR)*1E3
+                                    
                                 ELSE
                                     PSC3 = 0.0
+                                    ETC3 = 0.0
                                 ENDIF
                                 
                                 ! 
                                 IF(C4FRAC.GT.0.0)THEN
                                     CALL COLLATZC4(VCMAXC4, TAIR(IHOUR), TVJUPC4, TVJDNC4, DELSCC4, EAVCC4, EDVCC4,    &
-                                               UIDIFF(IHOUR,IPTUS), SUNLA, BEAMP, ABSRPU, EXTKUS, USLAI(IPTUS),    &
-                                               CICAC4*CA(IHOUR), APARUS(IHOUR,IPTUS), PSC4)
+                                               UIDIFF(IHOUR,IPTUS), SUNLA, BEAMP, ABSRPU, EXTKUS, USLAI(IPTUS),        &
+                                               CICAC4,CA(IHOUR), APARUS(IHOUR,IPTUS), PSC4, GSC4)
+                                    
+                                    ! mmol H2O m-2 s-1
+                                    ETC4 = GSC4*GSVGSC*VPD(IHOUR)/PRESS(IHOUR)*1E3
                                 ELSE
                                     PSC4 = 0.0
+                                    ETC4 = 0.0
                                 ENDIF
                                 
                                 ! Net photosynthesis
-                                PSUS(IHOUR,IPTUS) = PSUS(IHOUR,IPTUS) + C4FRAC*PSC4 + (1-C4FRAC)*PSC3 - RD0US
+                                PSUS(IHOUR,IPTUS) = PSUS(IHOUR,IPTUS) + C4FRAC*PSC4 + (1.0 - C4FRAC)*PSC3 - RD0US
+                                
+                                ! Transpiration
+                                ETUS(IHOUR,IPTUS) = C4FRAC*ETC4 + (1.0 - C4FRAC)*PSC3
                                 
                                 ! Bewdy outputs in mu mol, convert to W m-2
                                 APARUS(IHOUR,IPTUS) = APARUS(IHOUR,IPTUS) / UMOLPERJ
                                 PARUNDER(IHOUR,IPTUS) = PARUNDER(IHOUR,IPTUS) / UMOLPERJ
 
-                                ! Stomatal conductance and transpiration - estimated at whole-clump level, mol CO2 m-2 s-1
-                                GSIPT = GSBG0U + GSBG1U*PSUS(IHOUR,IPTUS) * RH(IHOUR)/CA(IHOUR) 
-                                
-                                ! mmol H2O m-2 s-1
-                                ETUS(IHOUR,IPTUS) = GSIPT*1.6*VPD(IHOUR)/PRESS(IHOUR)*1E3
+
                             END IF
                         END DO ! Loop over understorey points.
               
