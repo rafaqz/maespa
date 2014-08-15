@@ -1,0 +1,86 @@
+Example physiological parameters (ca. Eucalyptus)
+
+&noages
+noagep = 1
+/
+
+Reflectance and transmittance.
+&absorp
+nolayers = 1
+rhosol = 0.10 0.30 0.05
+atau = 0.093 0.34 0.01
+arho = 0.082 0.49 0.05
+/	
+	
+&bbgscon
+nodates=1
+condunits='H2O'
+/
+
+
+Stomatal conductance model for Medlyn et al. 2011 (GCB).
+Used when MODELGS=4 in confile.dat
+&bbmgs
+dates='01/01/08'
+g0 = 0.01
+g1 = 4.5
+nsides = 1
+wleaf = 0.03
+gamma = 0
+/
+
+Stomatal conductance model for Tuzet et al 2003 (PCE)
+Used when MODELGS=6 in confile.dat
+&bbtuz
+g0 = 0.01
+g1 = 4.5
+sf = 3.2
+psiv = -1.9
+nsides = 1
+wleaf = 0.03
+gamma = 0
+/
+
+&jmaxcon
+nodates=1
+/
+
+&vcmaxcon
+nodates=1
+/					  
+					  			  
+&jmax
+values = 145.4
+/
+
+&vcmax
+values = 89.5
+/
+
+T response parameters for Jmax
+&jmaxpars
+theta = 0.4
+eavj = 37259
+edvj = 200000
+delsj = 640.02
+ajq = 0.324
+/
+
+&vcmaxpars
+eavc = 47590
+/
+
+
+&rd
+values = 0.92
+/
+
+
+&rdpars
+rtemp = 25
+q10f = 0.067
+dayresp = 1.0
+effyrf = 0.4
+/ 
+	
+	

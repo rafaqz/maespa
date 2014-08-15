@@ -1,0 +1,67 @@
+Example water balance parameters.
+
+&watcontrol
+keepwet = 0
+simtsoil = 1
+simsoilevap = 1
+reassignrain = 1
+wsoilmethod = 1
+retfunction = 1
+equaluptake = 0
+usemeaset = 0
+usemeassw = 0
+/
+
+Throughfall = 1.0 : irrigation is to soil surface
+&wattfall
+rutterb = 3.7
+rutterd = 0.002
+maxstorage = 0.4
+throughfall = 0.6
+/
+
+&watinfilt
+expinf = 0.0
+/
+
+&rootpars
+rootresfrac = 0.4
+rootrad = 0.0001
+rootdens = 0.5e6
+rootmasstot = 1000
+nrootlayer = 10
+fracroot = 0.183 0.149 0.122 0.1 0.082 0.067 0.054 0.044 0.036 0.03 
+/
+
+
+&plantpars
+minrootwp = -3.0
+minleafwp = -2.0
+plantk = 2
+/
+
+Sandy soil
+&soilret
+bpar = 4.26
+psie = -0.000355816
+ksat = 195.6
+/
+
+&laypars
+nlayer = 20
+laythick = 0.1
+porefrac = 0.40
+drainlimit = 0.0
+fracorganic = 0.1805 0.0782 0.0495 0.0335 0.0277 0.0210 0.0154 0.0110 0.0077 0.0056
+/
+
+&initpars
+initwater = 0.1886 0.1961 0.2068 0.2149 0.2192 0.2003 0.1756 0.1775 0.1816 0.1771 0.173 0.1702 0.1703 0.1706 0.1716 0.1733 0.1752 0.1772 0.179 0.1807 
+soiltemp = 21.47 22.79 23.15 22.8 22.16 21.55 21.08 20.77 20.58 20.47 20.41 20.39 20.39 20.39 20.41 20.43 20.44 20.46 20.47 20.49 
+/
+
+&soiletpars
+drythickmin = 0.01
+tortpar = 0.66
+/
+

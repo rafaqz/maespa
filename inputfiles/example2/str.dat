@@ -1,0 +1,42 @@
+Example canopy structure file
+	
+&canopy					
+cshape = 'ELIP'					
+/					
+
+Sets parameter for ellipsoidal LAD (with 5 leaf angle classes)
+&lia		
+elp = 0.622
+nalpha = 5					
+/	 
+	
+
+&ladd
+jleaf = 0
+noagec = 1
+random = 1.0
+/					
+	
+Assume wind speed probably equal throughout the crown
+&aero
+extwind = 0.0
+/				
+
+&allom
+coefft = 91.4114
+expont = 1.741
+winterc = 0.0
+/
+	
+&allomb
+bcoefft = 8.9126
+bexpont = 1.341
+binterc = 0.0
+/
+	
+&allomr
+rcoefft = 20
+rexpont = 2.0
+rinterc = 0.0
+frfrac = 0.4
+/
