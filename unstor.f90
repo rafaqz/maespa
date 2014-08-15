@@ -511,10 +511,18 @@ SUBROUTINE PSMOSS(APAR,TLEAF,RH,CA,JMAX25,IECO,EAVJ,EDVJ,DELSJ,TVJUP,TVJDN,&
     
     ! Intermediate vars.    
     INTEGER :: IOERROR
-    REAL :: M, VCMAX, CI
+    REAL :: MSUN, MSH, VCMAX, CI, PSSUN, PSSH, PARSUN, PARSH
     
     CI = CICA * CA
     
+    ! Scaling follows Campbell&Norman 2000 (section 15.9, 'Calculating canopy assimilation from leaf assimilation') 
+    ! Average PAR on shaded leaves (=diffuse component) (this is an exponentially weighted average)
+    PARSH = DIFF*(1.0 - EXP(-SQRT(ABSRP)*KEXT*LAI))/(SQRT(ABSRP)*KEXT*LAI)
+    
+    ! Average PAR on sunlit leaves
+    PARSUN = ABSRP*(KEXT*BEAM + PARSH)
+    
+    ! Total canopy APAR (not used anymore in calculations below but output)
     APAR = (DIFF + SUNLA * BEAM) * ABSRP * (1.0 - EXP(-KEXT * LAI))
     
     ! Recalculate Vcmax, using values above, really this would be removed
@@ -522,16 +530,21 @@ SUBROUTINE PSMOSS(APAR,TLEAF,RH,CA,JMAX25,IECO,EAVJ,EDVJ,DELSJ,TVJUP,TVJDN,&
     ! Maximum Rubisco activity, umol m-2 s-1
     VCMAX = VCMAXTFN(VCMAX25, TAIR, EAVC, EDVC, DELSC, TVJUP, TVJDN)   
     
- 
     ! Rubisco and light-limited capacity (Appendix, 2B)
-    M = QUADM(beta1, -(VCMAX + alphac4 * APAR), (VCMAX * alphac4 * APAR), IOERROR)
+    MSUN = QUADM(beta1, -(VCMAX + alphac4 * PARSUN), (VCMAX * alphac4 * PARSUN), IOERROR)
+    MSH = QUADM(beta1, -(VCMAX + alphac4 * PARSH), (VCMAX * alphac4 * PARSH), IOERROR)
      
     ! The limitation of the overall rate by M and CO2 limited flux:
-    PS = QUADM(beta2, -(M + kslope * CI), (M * kslope * CI), IOERROR)
+    PSSUN = QUADM(beta2, -(MSUN + kslope * CI), (MSUN * kslope * CI), IOERROR)
+    PSSH = QUADM(beta2, -(MSH + kslope * CI), (MSH * kslope * CI), IOERROR)
     
-    ! Stomatal conductance, using CI
+    ! Total canopy photosynthesis (mu mol m-2 (ground) s-1)
+    PS = LAI*(SUNLA*PSSUN + (1.0 - SUNLA)*PSSH)
+    
+    ! Canopy stomatal conductance, using CI
     GS = PS/(CA-CI)
     
     RETURN
 END SUBROUTINE COLLATZC4    
 
+    
