@@ -175,6 +175,8 @@ SUBROUTINE OPENMETF(ISTART,IEND,CAK,PRESSK,SWMIN,SWMAX,USEMEASET,DIFSKY,ALAT,TTI
                 ICOL = MDSWP
             ELSEIF (COLUMNS(I).EQ.'SWC') THEN
                 ICOL = MDSWC
+            ELSEIF (COLUMNS(I).EQ.'SW') THEN
+                ICOL = MDSWC
             ELSEIF (COLUMNS(I).EQ.'ET')  THEN
                 ICOL = MDET
             ELSE
@@ -230,8 +232,14 @@ SUBROUTINE OPENMETF(ISTART,IEND,CAK,PRESSK,SWMIN,SWMAX,USEMEASET,DIFSKY,ALAT,TTI
                 ICOL = MHSMD
             ELSEIF (COLUMNS(I).EQ.'SWC')  THEN
                 ICOL = MHSWC
+            ELSEIF (COLUMNS(I).EQ.'SW')  THEN
+                ICOL = MHSWC
             ELSEIF (COLUMNS(I).EQ.'SWP')  THEN
                 ICOL = MHSWP
+            ELSEIF (COLUMNS(I).EQ.'TIME') THEN
+                ICOL = MHTIME
+            ELSEIF (COLUMNS(I).EQ.'VMFD')  THEN
+                ICOL = MHMFD
             ELSE
                 CALL SUBERROR('ERROR: Header incorrectly specified in Met file',&
                               IFATAL,0) 

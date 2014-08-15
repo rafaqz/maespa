@@ -144,9 +144,10 @@ PROGRAM maespa
         CALL INPUTUSSTR(NOUSPOINTS,X0,Y0,GRDAREAI,XLU,YLU,ZLU,USLAITAB,NOFUDATES,DATESFU,&
                         HTUS,NOHUDATES,DATESHU,FOLNUS,NONUDATES,DATESNU,EXTKUS)
         
-        CALL INPUTUSPHY(JMAXN25,IECOU,EAVJU,EDVJU,DELSJU,TVJUPU,TVJDNU,VCMAXN25,EAVCU,  &
+        CALL INPUTUSPHY(JMAXN25,IECOU,EAVJU,EDVJU,DELSJU,TVJUPU,TVJDNU,VCMAXN25,EAVCU,    &
                         EDVCU,DELSCU,UNMIN,AJQU,ABSRPU,GSBG0U,GSBG1U,CICARAT,RD0US,RDK,   &
-                        RDT,SLAUS,EFFY,MOSS,JMAX25M,VCMAX25M,THETAM)
+                        RDT,SLAUS,EFFY,MOSS,JMAX25M,VCMAX25M,THETAM,C4FRAC,               &
+                        VCMAXC4,TVJUPC4, TVJDNC4, DELSCC4, EAVCC4, EDVCC4, CICAC4)
     ENDIF
     
     ! Read MAESTEST input file.
@@ -196,7 +197,6 @@ PROGRAM maespa
                         NZEN,DIFZEN,RANDOMSPEC(I),DEXTSPEC(I,1:MAXANG))
         END DO
         
-        ! Added 29-3-2008 (RAD): reposition met file correctly,
         ! to account for the looping order change.
         CALL RESTARTMETF(IDAY+ISTART,MSTART,MFLAG)
        
@@ -304,7 +304,7 @@ PROGRAM maespa
                 END DO
                 
                 ! Diffuse transmission to the understorey points.
-                CALL TRANSD(IDAY,IOTUTD,NEWCANOPY,IPROGUS,NOTREES,XSLOPE,YSLOPE,NZEN,DIFZEN,NAZ,NOUSPOINTS, &
+                CALL TRANSD(IDAY,NEWCANOPY,IPROGUS,NOTREES,XSLOPE,YSLOPE,NZEN,DIFZEN,NAZ,NOUSPOINTS, &
                             DEXTTUS,DIFSKY,XLU,YLU,ZLU,RXUS,RYUS,RZUS,DXTUS,DYTUS,DZTUS,XMAX,YMAX,SHADEHT,  &
                             FOLTUS,ZBCUS,JLEAFTUS,BPTTUS,NOAGECTUS,PROPCT,JSHAPETUS,SHAPETUS,NEWTUTD,TUUS,  &
                             TDUS,RELDFUS,DEXT)   
@@ -523,7 +523,7 @@ PROGRAM maespa
                        ENDDO
 
                        CALL TRANSD( &
-                        IDAY,IOTUTD,NEWCANOPY,IPROGCUR,NOTREESTEST,XSLOPE,YSLOPE, &
+                        IDAY,NEWCANOPY,IPROGCUR,NOTREESTEST,XSLOPE,YSLOPE, &
                         NZEN,DIFZEN,NAZ,NUMTESTPNT,DEXTTP,DIFSKY, &
                         XLP,YLP,ZLP,RXP,RYP,RZP,DXTP,DYTP,DZTP, &
                         XMAX,YMAX,SHADEHT, &
@@ -547,7 +547,7 @@ PROGRAM maespa
                 !891     FORMAT (6(F6.2,1X))
 
                 ! Calculate diffuse transmittances
-                CALL TRANSD(IDAY,IOTUTD,NEWCANOPY,IPROG,NOTREES,XSLOPE,YSLOPE,NZEN,DIFZEN,NAZ,NUMPNT,DEXTT,             &
+                CALL TRANSD(IDAY,NEWCANOPY,IPROG,NOTREES,XSLOPE,YSLOPE,NZEN,DIFZEN,NAZ,NUMPNT,DEXTT,             &
                             DIFSKY,XL,YL,ZL,RX,RY,RZ,DXT,DYT,DZT,XMAX,YMAX,SHADEHT,FOLT,ZBC,JLEAFT,BPTT,NOAGECT,PROPCT, &
                             JSHAPET,SHAPET,NEWTUTD,TU,TD,RELDF,DEXT)
 
@@ -761,7 +761,6 @@ PROGRAM maespa
                 ! Output information to layer flux file if required
                 IF (IOHRLY.GT.1) CALL OUTPUTLAY(ULAY,FOLLAY,JMAX25,VCMAX25,NOLAY)
                    
-
                 ! If the diffuse transmittances have changed, must set up the EHC
                 IF (NEWTUTD.EQ.1.AND.TOTLAI.GT.0) THEN
                     CALL EHC(NUMPNT,TU,TD,TOTLAI,XSLOPE,YSLOPE,NAZ,NZEN,DIFZEN,DEXT,DLAI,EXPDIF,LAYER,MLAYER)
@@ -865,13 +864,26 @@ PROGRAM maespa
                                 ELSE    
                                     BEAMP = 0.0
                                 ENDIF
-                
-                                CALL BEWDY(IHOUR,BEAMP,UMOLPERJ*UIDIFF(IHOUR,IPTUS),SUNLA,BALPHA,BLAMBDA,FN0US(IPTUS),  &
-                                            UNMIN,EXTKUS,ABSRPU,USLAI(IPTUS), APARUS(IHOUR,IPTUS),PSUS(IHOUR,IPTUS),    &
+                                
+                                IF(C4FRAC.LT.1.0)THEN
+                                    CALL BEWDY(IHOUR,BEAMP,UMOLPERJ*UIDIFF(IHOUR,IPTUS),SUNLA,BALPHA,BLAMBDA,FN0US(IPTUS),  &
+                                            UNMIN,EXTKUS,ABSRPU,USLAI(IPTUS), APARUS(IHOUR,IPTUS),PSC3,                 &
                                             PARUNDER(IHOUR,IPTUS))
+                                ELSE
+                                    PSC3 = 0.0
+                                ENDIF
+                                
+                                ! 
+                                IF(C4FRAC.GT.0.0)THEN
+                                    CALL COLLATZC4(VCMAXC4, TAIR(IHOUR), TVJUPC4, TVJDNC4, DELSCC4, EAVCC4, EDVCC4,    &
+                                               UIDIFF(IHOUR,IPTUS), SUNLA, BEAMP, ABSRPU, EXTKUS, USLAI(IPTUS),    &
+                                               CICAC4*CA(IHOUR), APARUS(IHOUR,IPTUS), PSC4)
+                                ELSE
+                                    PSC4 = 0.0
+                                ENDIF
                                 
                                 ! Net photosynthesis
-                                PSUS(IHOUR,IPTUS) = PSUS(IHOUR,IPTUS) - RD0US
+                                PSUS(IHOUR,IPTUS) = PSUS(IHOUR,IPTUS) + C4FRAC*PSC4 + (1-C4FRAC)*PSC3 - RD0US
                                 
                                 ! Bewdy outputs in mu mol, convert to W m-2
                                 APARUS(IHOUR,IPTUS) = APARUS(IHOUR,IPTUS) / UMOLPERJ

@@ -1035,7 +1035,7 @@ END SUBROUTINE EXDIFF
 
 !**********************************************************************
       SUBROUTINE TRANSD( &
-        IDAY,IOTUTD,NEWCANOPY,IPROG,NT,XSLOPE,YSLOPE, &
+        IDAY,NEWCANOPY,IPROG,NT,XSLOPE,YSLOPE, &
         NZEN,DIFZEN,NAZ,NUMPNT,DEXTT,DIFSKY, &
         XL,YL,ZL,RX,RY,RZ,DXT,DYT,DZT, &
         XMAX,YMAX,SHADEHT, &
@@ -1046,8 +1046,9 @@ END SUBROUTINE EXDIFF
 !**********************************************************************
 
       USE maestcom
+      USE switches
       IMPLICIT NONE
-      INTEGER IRAD,I,NT,NZEN,NEWTUTD,IOTUTD,IDAY
+      INTEGER IRAD,I,NT,NZEN,NEWTUTD,IDAY
       INTEGER J,NUMPNT,NEWCANOPY, FLOAT,K
       INTEGER JSHAPET(MAXT),JLEAFT(MAXT),NOAGECT(MAXT)
       INTEGER NAZ,IPT,IPROG,IFLAG
