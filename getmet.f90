@@ -149,7 +149,7 @@ SUBROUTINE OPENMETF(ISTART,IEND,CAK,PRESSK,SWMIN,SWMAX,USEMEASET,DIFSKY,ALAT,TTI
     IF (MFLAG.EQ.0) THEN ! Daily values
         DO I = 1,NOCOLUMNS
             ICOL = MISSING
-            IF (COLUMNS(I).EQ.'DATE')     THEN
+            IF (COLUMNS(I).EQ.'DATE'.OR.COLUMNS(I).EQ.'DOY')THEN
                 ICOL = MDDATE
             ELSEIF (COLUMNS(I).EQ.'WIND') THEN
                 ICOL = MDWIND
@@ -196,7 +196,7 @@ SUBROUTINE OPENMETF(ISTART,IEND,CAK,PRESSK,SWMIN,SWMAX,USEMEASET,DIFSKY,ALAT,TTI
     ELSE                 ! Hourly values
         DO I = 1,NOCOLUMNS
             ICOL = MISSING
-            IF (COLUMNS(I).EQ.'DATE') THEN
+            IF (COLUMNS(I).EQ.'DATE'.OR.COLUMNS(I).EQ.'DOY') THEN
                 ICOL = MHDATE
             ELSEIF (COLUMNS(I).EQ.'WIND') THEN
                 ICOL = MHWIND
