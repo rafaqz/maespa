@@ -318,7 +318,8 @@ PROGRAM maespa
             DO ITAR = 1,NOTARGETS
                 ITREE = ITARGETS(ITAR)
                 ISPEC = ISPECIES(ITREE)
-
+                NOSPEC = MAXVAL(ISPECIES(ITARGETS(1:NOTARGETS)))
+                
                 JLEAF = JLEAFSPEC(ISPEC)
                 JSHAPE = JSHAPESPEC(ISPEC)
                 SHAPE = SHAPESPEC(ISPEC)
@@ -710,7 +711,12 @@ PROGRAM maespa
     
                 ! Assign water balance and hydraulics.
                 MINLEAFWP = MINLEAFWPSPEC(ISPEC)
-                FRACROOT = FRACROOTSPEC(1:MAXSOILLAY,ISPEC)
+                IF(NOROOTSPEC.EQ.1.AND.NOSPEC.GT.1)THEN
+                    ICHOOSE = 1
+                ELSE
+                    ICHOOSE = ISPEC
+                ENDIF
+                FRACROOT = FRACROOTSPEC(1:MAXSOILLAY,ICHOOSE)
                 ROOTMASS = ROOTMASSSPEC(1:MAXSOILLAY,ISPEC)
                 ROOTLEN = ROOTLENSPEC(1:MAXSOILLAY,ISPEC)
                 
@@ -784,9 +790,7 @@ PROGRAM maespa
                                         SOILDATA, SOILMOISTURE,PSIE,BPAR,KSAT,ROOTRESIST,ROOTRESFRAC,    &
                                         ROOTRAD,MINROOTWP,TOTLAI,WINDAH(IHOUR),ZHT,Z0HT,GAMSOIL,   &
                                         WEIGHTEDSWP,TOTESTEVAP, &
-                                        FRACUPTAKE,TOTSOILRES,ALPHARET,WS,WR,NRET)
-
-                    FRACUPTAKESPEC(1:MAXSOILLAY, ISPEC) = FRACUPTAKE(1:MAXSOILLAY)
+                                        FRACUPTAKESPEC(1:MAXSOILLAY, ISPEC),TOTSOILRES,ALPHARET,WS,WR,NRET)
                     
                     ! Soil surface T for SCATTER routine:
                     IF(SIMTSOIL.EQ.0)THEN  ! No Tsoil simulated.
@@ -1268,11 +1272,11 @@ PROGRAM maespa
             IF(ISMAESPA) THEN
                 
                 ! Get area-based estimates of radiation interception and transpiration rate.
-                CALL SCALEUP(IHOUR, USESTAND, NOTARGETS, NOALLTREES, TARGETFOLS,ITARGETS,ISPECIES,TOTLAI,STOCKING,  &
+                CALL SCALEUP(IHOUR, USESTAND, NOTARGETS, NOALLTREES, TARGETFOLS,ITARGETS,ISPECIES,NOSPEC,TOTLAI,STOCKING,  &
                                 SCLOSTTREE,THRAB,RADABV,FH2O,PLOTAREA,  &
                                 DOWNTHTREE,RGLOBABV,RGLOBUND,RADINTERC,FRACAPAR,ISIMUS,FH2OUS(IHOUR),THRABUS(IHOUR),   &
                                 PARUSMEAN(IHOUR),SCLOSTTOT,GSCAN,WINDAH(IHOUR),ZHT,Z0HT,ZPD,PRESS(IHOUR),TAIR(IHOUR),       &
-                                VPD(IHOUR),ETMM,ETUSMM)            
+                                VPD(IHOUR),ETMM,ETUSMM,ETMMSPEC)            
 
                 ! Find soil surface temperature, unless this is input data.
                 ! Note this uses DRYTHICK from previous timestep (or initial value in first go).
@@ -1305,7 +1309,7 @@ PROGRAM maespa
                 CALL WATBALLAY(IDAY,IHOUR,PPT(IHOUR),RUTTERB,RUTTERD,MAXSTORAGE,THROUGHFALL,RADINTERC,CANOPY_STORE,         &
                                 EVAPSTORE, DRAINSTORE,SURFACE_WATERMM,POREFRAC,WETTINGBOT,WETTINGTOP,NLAYER,NROOTLAYER,     &
                                 LAYTHICK,SOILTK,QE,TAIR(IHOUR) + FREEZE,VPD(IHOUR),WINDAH(IHOUR),ZHT,Z0HT,ZPD,PRESS(IHOUR), &
-                                ETMM,USEMEASET,ETMEAS(IHOUR),FRACUPTAKE,ICEPROP,FRACWATER,DRAINLIMIT,KSAT,BPAR,             &
+                                ETMM,ETMMSPEC,NOSPEC,USEMEASET,ETMEAS(IHOUR),FRACUPTAKESPEC,ICEPROP,FRACWATER,DRAINLIMIT,KSAT,BPAR,             &
                                 WSOIL,WSOILROOT,DISCHARGE,DRYTHICKMIN,DRYTHICK,SOILEVAP,OVERFLOW,WATERGAIN,WATERLOSS,       &
                                 PPTGAIN,KEEPWET,EXPINF,WS,WR,NRET,RETFUNCTION)
  

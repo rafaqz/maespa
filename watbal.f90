@@ -243,8 +243,8 @@ END SUBROUTINE INITWATBAL
                               POREFRAC,WETTINGBOT,WETTINGTOP,NLAYER, &
                               NROOTLAYER,LAYTHICK,SOILTK,QE, &
                               TAIRK,VPDPA,WIND, &
-                              ZHT,Z0HT,ZPD,PRESS,ETMM, &
-                              USEMEASET,ETMEAS,FRACUPTAKE, &
+                              ZHT,Z0HT,ZPD,PRESS,ETMM,ETMMSPEC,NOSPEC, &
+                              USEMEASET,ETMEAS,FRACUPTAKESPEC, &
                               ICEPROP,FRACWATER,DRAINLIMIT, &
                               KSAT,BPAR,WSOIL,WSOILROOT,DISCHARGE, &
                               DRYTHICKMIN,DRYTHICK,QEMM,OVERFLOW, &
@@ -258,19 +258,20 @@ END SUBROUTINE INITWATBAL
 ! RAD, July 2008
 !**********************************************************************
 
-    USE maestcom
-    IMPLICIT NONE
+        USE maestcom
+        IMPLICIT NONE
         INTEGER I,J,RR,NLAYER,NROOTLAYER,USEMEASET,IDAY,IHOUR
         INTEGER KEEPWET
-        INTEGER RETFUNCTION
+        INTEGER RETFUNCTION,NOSPEC,ISPEC
         REAL POREFRAC(MAXSOILLAY),WETTINGBOT(10),WETTINGTOP(10)
         REAL LAYTHICK(MAXSOILLAY)
         REAL WATERGAIN(MAXSOILLAY),WATERLOSS(MAXSOILLAY)
-        REAL FRACUPTAKE(MAXSOILLAY),FRACWATER(MAXSOILLAY)
+        REAL FRACUPTAKESPEC(MAXSOILLAY,MAXSP),FRACWATER(MAXSOILLAY)
+        REAL FRACUPTAKE(MAXSOILLAY)
         REAL ICEPROP(MAXSOILLAY),PPTGAIN(MAXSOILLAY)
         REAL BPAR(MAXSOILLAY), KSAT(MAXSOILLAY)
         REAL DRAINLIMIT(MAXSOILLAY)
-        REAL MAXSTORAGE,LAMBDASOIL
+        REAL MAXSTORAGE,LAMBDASOIL,ETMMSPEC(MAXSP)
         REAL SOILTK,TAIRK,VPDPA,VPDKPA,QEM,QEMM,SURFACE_WATERMM
         REAL PPT,EVAPSTORE,DRAINSTORE,WSOILROOT,TOTESTEVAPMM
         REAL SOILTC,TAIRC,WSOIL,SNOW,QE,THROUGHFALL,WIND,ZHT,Z0HT
@@ -344,14 +345,24 @@ END SUBROUTINE INITWATBAL
 !       Use measured or modelled ET for water balance calculations:
         IF(USEMEASET.EQ.1)THEN
             ETLOSS = MAX(0.0, ETMEAS / 1000)
+            DO I=1,NROOTLAYER
+                WATERLOSS(I) = WATERLOSS(I) + ETLOSS*FRACUPTAKE(I)
+            ENDDO
+! Use modelled; allow for multiple species.
         ELSE
-            ETLOSS = ETMM / 1000
+        
+            DO ISPEC=1,NOSPEC
+                
+                !       Water loss from each rooted layer (i.e. *root water uptake)
+                ETLOSS = ETMMSPEC(ISPEC) / 1000
+                FRACUPTAKE = FRACUPTAKESPEC(1:MAXSOILLAY, ISPEC)
+                
+                DO I=1,NROOTLAYER
+                    WATERLOSS(I) = WATERLOSS(I) + ETLOSS*FRACUPTAKE(I)
+                ENDDO
+            
+            ENDDO
         ENDIF
-
-!       Water loss from each rooted layer (i.e. *root water uptake)
-        DO I=1,NROOTLAYER
-            WATERLOSS(I) = WATERLOSS(I) + ETLOSS*FRACUPTAKE(I)
-        ENDDO
 
 !       Calculate drainage for each soil layer
         DO J = 1,NLAYER
@@ -1805,14 +1816,14 @@ END SUBROUTINE INITWATBAL
 !**********************************************************************
 
       SUBROUTINE SCALEUP(IHOUR,USESTAND,NOTARGETS,NOALLTREES,FOLT, &
-                         ITARGETS,ISPECIES,TOTLAI,STOCKING,SCLOSTTREE, &
+                         ITARGETS,ISPECIES,NOSPEC,TOTLAI,STOCKING,SCLOSTTREE, &
                          THRAB,RADABV,FH2O, &
                          PLOTAREA,DOWNTHTREE, &
                          RGLOBABV,RGLOBUND,RADINTERC, &
                          FRACAPAR, &
                          ISIMUS,FH2OUS,THRABUS,PARUSMEAN, &
                          SCLOSTTOT,GSCAN,WIND,ZHT,Z0HT,ZPD, &
-                         PRESS,TAIR,VPD,ETMM,ETUSMM)
+                         PRESS,TAIR,VPD,ETMM,ETUSMM,ETMMSPEC)
 
 ! Scale up individual tree transpiration and radiation interception to
 ! a per m2 basis for use in water/heat balance calculations.
@@ -1824,7 +1835,7 @@ END SUBROUTINE INITWATBAL
     IMPLICIT NONE
     INTEGER NOTARGETS,NOALLTREES,ITAR
     INTEGER ITARGETS(MAXT),I,IHOUR,ISIMUS
-    INTEGER USESTAND,ISPECIES(MAXT)
+    INTEGER USESTAND,ISPECIES(MAXT),NOSPEC,ISPEC
     REAL FOLT(MAXT),EXPFACTORS(MAXT)
     REAL SCLOSTTREE(MAXT,3),GSCAN(MAXT,MAXHRS)
     REAL THRAB(MAXT,MAXHRS,3),RADABV(MAXHRS,3)
@@ -1835,8 +1846,8 @@ END SUBROUTINE INITWATBAL
     REAL RGLOBABV,RGLOBABV12,RGLOBUND,RADINTERC12,RADINTERC
     REAL RADINTERC1,RADINTERC2,RADINTERC3,SCLOSTTOT
     REAL FRACAPAR,GSCANAV,RADINTERCTREE,CONV
-    REAL ETMM, WIND, ZHT,Z0HT,ZPD,PRESS,TAIR,VPD,ETCAN
-    REAL ETUSMM,FH2OUS,WTOT
+    REAL ETMM,  WIND, ZHT,Z0HT,ZPD,PRESS,TAIR,VPD,ETCAN
+    REAL ETUSMM,FH2OUS,WTOT,ETMMSPEC(MAXSP)
     
 ! Get average leaf area of target trees
       TOTLATAR = 0.0
@@ -1910,9 +1921,27 @@ END SUBROUTINE INITWATBAL
       ENDIF
     
 ! Alternatively, do water balance only based on the target trees (no scaling to stand).
-      IF(USESTAND.EQ.0)THEN
-    
-          ! Total water use, based on FH2O (not recalculated!)
+      IF(USESTAND.EQ.0) THEN
+
+      IF(NOSPEC.GT.1)THEN
+          
+        DO ISPEC=1,NOSPEC
+            
+            WTOT = 0.0
+            DO I=1,NOTARGETS
+              IF(ISPECIES(ITARGETS(I)).EQ.ISPEC)THEN
+                 WTOT = WTOT + FH2O(I,IHOUR)
+              ENDIF
+              
+            ENDDO
+            
+            ETMMSPEC(ISPEC) = WTOT * SPERHR * 1E-06 * 18 * 1E-03 / PLOTAREA
+        
+        ENDDO
+      
+      ENDIF
+      
+        ! Total water use, based on FH2O (not recalculated!)
           WTOT = 0.0
           DO I=1,NOTARGETS
               WTOT = WTOT + FH2O(I,IHOUR)
@@ -1920,9 +1949,9 @@ END SUBROUTINE INITWATBAL
         
           ! Simple conversion
           ETMM = WTOT * SPERHR * 1E-06 * 18 * 1E-03 / PLOTAREA
-    
+      
       ENDIF
-
+      
       RETURN
       END
 
