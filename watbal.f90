@@ -328,7 +328,7 @@ END SUBROUTINE INITWATBAL
 !       Note that it currently can only come from 1st or 2nd layer!
 !       This probably puts constraints on the thickness of soil layers (default = 10cm)
         IF(DRYTHICK.LT.LAYTHICK(1))THEN
-              RR=1      !the dry zone does not extend beneath the top la
+              RR=1      !the dry zone does not extend beneath the top layer
         ELSE
               RR=2      !it does
         ENDIF
@@ -1805,7 +1805,7 @@ END SUBROUTINE INITWATBAL
 !**********************************************************************
 
       SUBROUTINE SCALEUP(IHOUR,USESTAND,NOTARGETS,NOALLTREES,FOLT, &
-                         ITARGETS,TOTLAI,STOCKING,SCLOSTTREE, &
+                         ITARGETS,ISPECIES,TOTLAI,STOCKING,SCLOSTTREE, &
                          THRAB,RADABV,FH2O, &
                          PLOTAREA,DOWNTHTREE, &
                          RGLOBABV,RGLOBUND,RADINTERC, &
@@ -1824,7 +1824,7 @@ END SUBROUTINE INITWATBAL
     IMPLICIT NONE
     INTEGER NOTARGETS,NOALLTREES,ITAR
     INTEGER ITARGETS(MAXT),I,IHOUR,ISIMUS
-    INTEGER USESTAND
+    INTEGER USESTAND,ISPECIES(MAXT)
     REAL FOLT(MAXT),EXPFACTORS(MAXT)
     REAL SCLOSTTREE(MAXT,3),GSCAN(MAXT,MAXHRS)
     REAL THRAB(MAXT,MAXHRS,3),RADABV(MAXHRS,3)
@@ -1838,9 +1838,6 @@ END SUBROUTINE INITWATBAL
     REAL ETMM, WIND, ZHT,Z0HT,ZPD,PRESS,TAIR,VPD,ETCAN
     REAL ETUSMM,FH2OUS,WTOT
     
-!    print*,ihour, radinterc
-!    pause
-
 ! Get average leaf area of target trees
       TOTLATAR = 0.0
       DO I = 1,NOTARGETS
@@ -1851,10 +1848,10 @@ END SUBROUTINE INITWATBAL
 ! Get average leaf area of all trees in the stand:
       ALLTREELAMEAN = TOTLAI / STOCKING
 
-! Skip if no foliage.
+! If USESTAND=1, uses entire stand to determine water balance (not just target trees).
       IF(USESTAND.GT.0)THEN
           IF(TREELAMEAN.GT.0)THEN
-    ! Expansion factors:
+    ! Expansion factors (each target tree represents X trees in the stand)
            EXPFACTORS(1:NOTARGETS) = (ALLTREELAMEAN / TREELAMEAN) * &
                                       (NOALLTREES / NOTARGETS)
           ELSE
@@ -1865,7 +1862,6 @@ END SUBROUTINE INITWATBAL
       ENDIF
             
 ! Get total radiation above and under the canopy.
-
       CALL GETRGLOB(IHOUR,SCLOSTTREE,THRAB,RADABV, &
                       NOTARGETS,NOALLTREES,PLOTAREA, &
                       ISIMUS,THRABUS,PARUSMEAN, &
@@ -1877,7 +1873,7 @@ END SUBROUTINE INITWATBAL
 ! Get average canopy conductance across target trees:
       GSCANAV = 0.
       DO ITAR = 1,NOTARGETS
-          GSCANAV = GSCANAV + FOLT(ITAR) * GSCAN(ITAR,IHOUR)  !/REAL(NOTARGETS)
+          GSCANAV = GSCANAV + FOLT(ITAR) * GSCAN(ITAR,IHOUR)
       ENDDO
       GSCANAV = GSCANAV / TOTLATAR
       
@@ -1887,11 +1883,11 @@ END SUBROUTINE INITWATBAL
 
 ! Estimate average conductance for all trees, based on
 ! leaf area difference:
-      IF(TREELAMEAN.GT.0)THEN
-         GSCANAV = GSCANAV * (ALLTREELAMEAN / TREELAMEAN)
-      ELSE
-         GSCANAV = 0.0
-      ENDIF
+        IF(TREELAMEAN.GT.0)THEN
+            GSCANAV = GSCANAV * (ALLTREELAMEAN / TREELAMEAN)
+        ELSE
+            GSCANAV = 0.0
+        ENDIF
 
 ! Total radiation interception from GETRGLOB was in W m-2 (soil),
 ! convert to per tree (for use in ETCAN):
@@ -1904,7 +1900,6 @@ END SUBROUTINE INITWATBAL
             PRESS,TAIR, &
             RADINTERCTREE,   &
             VPD,GSCANAV,STOCKING) * CONV
-        
         
 ! Add understorey ET to ETMM, if simulated:
         IF(ISIMUS.EQ.1)THEN

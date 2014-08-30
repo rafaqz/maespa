@@ -708,6 +708,7 @@ PROGRAM maespa
                 PSIV = PSIVSPEC(ISPEC)   
                 NSIDES = NSIDESSPEC(ISPEC)
     
+                ! Assign water balance and hydraulics.
                 MINLEAFWP = MINLEAFWPSPEC(ISPEC)
                 FRACROOT = FRACROOTSPEC(1:MAXSOILLAY,ISPEC)
                 ROOTMASS = ROOTMASSSPEC(1:MAXSOILLAY,ISPEC)
@@ -736,7 +737,8 @@ PROGRAM maespa
                 CALL INTERPOLATEP(IDAY,ISTART,NOJDATES,DATESJ,JMAXTABLE,NOVDATES,DATESV,VCMAXTABLE,NORDATES,&
                                     DATESRD,RDTABLE,NOSLADATES,DATESSLA,SLATABLE,NOADATES,DATESA,AJQTABLE,  &
                                     NOFQDATES,DATESFQ,Q10FTABLE,NOWQDATES,DATESWQ,Q10WTABLE,NOLAY,NOAGEP,   &
-                                    JMAX25,VCMAX25,RD0,SLA,AJQ,Q10F,Q10W,NOGSDATES,DATESGS,G0TABLE,G1TABLE,G0,G1,NOWLEAFDATES,DATESWLEAF,WLEAFTABLE,WLEAF)
+                                    JMAX25,VCMAX25,RD0,SLA,AJQ,Q10F,Q10W,NOGSDATES,DATESGS,G0TABLE,G1TABLE,G0,G1, &
+                                    NOWLEAFDATES,DATESWLEAF,WLEAFTABLE,WLEAF)
                 
                 CALL INTERPOLATET(IDAY,ISTART,IHOUR,NOXDATES,DATESX,RXTABLE,NOYDATES,DATESY,RYTABLE,NOZDATES,   &
                                     DATESZ,RZTABLE,NOTDATES,DATEST,ZBCTABLE,NODDATES,DATESD,DIAMTABLE,          &
@@ -744,11 +746,11 @@ PROGRAM maespa
                                     TOTLAI,DIAM,STOCKING,IFLUSH,DT1,DT2,DT3,DT4,EXPTIME,APP,EXPAN,NEWCANOPY,    &
                                     CANOPYDIMS)
             
-                CALL POINTSNEW(NOLAY,PPLAY,JLEAF,JSHAPE,SHAPE,RX(1),RY(1),RZ(1),ZBC(1),DXT(1),DYT(1),&
-                                DZT(1),FOLT(1),PROPC,PROPP,BPT,NOAGECT(1),NOAGEP,XL,YL,ZL,VL,DLT,DLI,&
+                CALL POINTSNEW(NOLAY,PPLAY,JLEAF,JSHAPE,SHAPE,RX(1),RY(1),RZ(1),ZBC(1),DXT(1),DYT(1), &
+                                DZT(1),FOLT(1),PROPC,PROPP,BPT,NOAGECT(1),NOAGEP,XL,YL,ZL,VL,DLT,DLI, &
                                 LGP,FOLLAY)          
                 
-                ! Following function s need FOLLAY. 
+                ! Following functions need FOLLAY. 
                 CALL GETWIND(FOLLAY,FOLT(1),TOTLAI,EXTWIND,WINDLAY)
           
                 ! Calculate woody biomass and woody biomass increment
@@ -784,6 +786,8 @@ PROGRAM maespa
                                         WEIGHTEDSWP,TOTESTEVAP, &
                                         FRACUPTAKE,TOTSOILRES,ALPHARET,WS,WR,NRET)
 
+                    FRACUPTAKESPEC(1:MAXSOILLAY, ISPEC) = FRACUPTAKE(1:MAXSOILLAY)
+                    
                     ! Soil surface T for SCATTER routine:
                     IF(SIMTSOIL.EQ.0)THEN  ! No Tsoil simulated.
                         PREVTSOIL = TK(TSOIL(IHOUR))
@@ -980,8 +984,8 @@ PROGRAM maespa
                     ! Loop over grid points
                     DO IPT = 1,NUMPNT
                         ! Calculate the weighted pathlengths for beam radiation.
-                        CALL TRANSB(IHOUR,IPROG,ZEN(IHOUR),AZ(IHOUR),XSLOPE,YSLOPE,FBEAM,BEXTT,XL(IPT),YL(IPT),ZL(IPT),&
-                                    RX,RY,RZ,DXT,DYT,DZT,XMAX,YMAX,SHADEHT,FOLT,ZBC,JLEAFT,BPTT,NOAGECT,PROPCT,JSHAPET,&
+                        CALL TRANSB(IHOUR,IPROG,ZEN(IHOUR),AZ(IHOUR),XSLOPE,YSLOPE,FBEAM,BEXTT,XL(IPT),YL(IPT),ZL(IPT), &
+                                    RX,RY,RZ,DXT,DYT,DZT,XMAX,YMAX,SHADEHT,FOLT,ZBC,JLEAFT,BPTT,NOAGECT,PROPCT,JSHAPET, &
                                     SHAPET,NOTREES,SUNLA,BEXT,BEXTANGT,BEXTANG)
                         ! Assign plant hydraulic conductance
                         !PLANTK = PLANTKCR(ITAR,IPT)
@@ -1152,8 +1156,10 @@ PROGRAM maespa
             
                     ! Normalise to get average foliage temperature
                     TCAN(ITAR,IHOUR) = TCAN(ITAR,IHOUR)/FOLT(1)
+                    
                     ! Same for leaf water potential
                     PSILCAN(ITAR,IHOUR) = PSILCAN(ITAR,IHOUR)/FOLT(1)
+                    
                     ! And ci
                     CICAN(ITAR,IHOUR) = CICAN(ITAR,IHOUR)/FOLT(1)
                     
@@ -1161,9 +1167,11 @@ PROGRAM maespa
     
                     ! Canopy T at nighttime is same as air temperature. 
                     TCAN(ITAR,IHOUR) = TAIR(IHOUR)
+                    
                     ! Leaf water potential same as soil water potential
                     PSILCAN(ITAR,IHOUR) = WEIGHTEDSWP
                     PSILCANMIN(ITAR,IHOUR) = WEIGHTEDSWP
+                    
                     ! And ci the same as ca
                     CICAN(ITAR,IHOUR) = CA(IHOUR)
 
@@ -1218,10 +1226,10 @@ PROGRAM maespa
                
                 ! No good (does not run for Tumbarumba, and has not been updated since looping order change).
                 ! Calculate non-foliage maintenance respiration (in umol tree-1 s-1)
-                        FRESPW(ITAR,IHOUR) = RESP(RMW,RMW,TAIR(IHOUR),TAIR(IHOUR),Q10W,0.0,RTEMPW,1.0,TBELOW) * WBIOM
-                        FRESPB(ITAR,IHOUR) = RESP(RMB,RMB,TAIR(IHOUR),TAIR(IHOUR),Q10B,0.0,RTEMPB,1.0,TBELOW) * BBIOM
-                        FRESPFR(ITAR,IHOUR) = RESP(RMFR,RMFR,TSOIL(IHOUR),TAIR(IHOUR),Q10R,0.0,RTEMPR,1.0,TBELOW) * RBIOM * FRFRAC
-                        FRESPCR(ITAR,IHOUR) = RESP(RMCR,RMCR,TSOIL(IHOUR),TAIR(IHOUR),Q10R,0.0,RTEMPR,1.0,TBELOW) * RBIOM * (1. - FRFRAC)
+                FRESPW(ITAR,IHOUR) = RESP(RMW,RMW,TAIR(IHOUR),TAIR(IHOUR),Q10W,0.0,RTEMPW,1.0,TBELOW) * WBIOM
+                FRESPB(ITAR,IHOUR) = RESP(RMB,RMB,TAIR(IHOUR),TAIR(IHOUR),Q10B,0.0,RTEMPB,1.0,TBELOW) * BBIOM
+                FRESPFR(ITAR,IHOUR) = RESP(RMFR,RMFR,TSOIL(IHOUR),TAIR(IHOUR),Q10R,0.0,RTEMPR,1.0,TBELOW) * RBIOM * FRFRAC
+                FRESPCR(ITAR,IHOUR) = RESP(RMCR,RMCR,TSOIL(IHOUR),TAIR(IHOUR),Q10R,0.0,RTEMPR,1.0,TBELOW) * RBIOM * (1. - FRFRAC)
 
 
             END DO ! End loop over trees
@@ -1241,7 +1249,7 @@ PROGRAM maespa
 
             TARGETFOLS = 0
             DO K=1,NOTARGETS
-                DO I = 1,NOALLTREES                     ! modification Christina March 2013
+                DO I = 1,NOALLTREES
                     IF(IT(I).EQ.ITARGETS(K)) THEN
                         TARGETFOLS(K)=FOLT(I)
                     ENDIF
@@ -1257,9 +1265,10 @@ PROGRAM maespa
 !            ENDDO
             
             !
-            IF(ISMAESPA)THEN
+            IF(ISMAESPA) THEN
+                
                 ! Get area-based estimates of radiation interception and transpiration rate.
-                CALL SCALEUP(IHOUR, USESTAND, NOTARGETS, NOALLTREES, TARGETFOLS,ITARGETS,TOTLAI,STOCKING,  &
+                CALL SCALEUP(IHOUR, USESTAND, NOTARGETS, NOALLTREES, TARGETFOLS,ITARGETS,ISPECIES,TOTLAI,STOCKING,  &
                                 SCLOSTTREE,THRAB,RADABV,FH2O,PLOTAREA,  &
                                 DOWNTHTREE,RGLOBABV,RGLOBUND,RADINTERC,FRACAPAR,ISIMUS,FH2OUS(IHOUR),THRABUS(IHOUR),   &
                                 PARUSMEAN(IHOUR),SCLOSTTOT,GSCAN,WINDAH(IHOUR),ZHT,Z0HT,ZPD,PRESS(IHOUR),TAIR(IHOUR),       &
@@ -1281,11 +1290,9 @@ PROGRAM maespa
                                     VPD(IHOUR)/1000,RGLOBUND,TAIR(IHOUR) + FREEZE,THERMCOND(1),             &
                                     LAYTHICK(1),POREFRAC(1),SOILWP(1),DRYTHICK,TORTPAR,VIEWFACTOR,          &
                                     QH,QE,QN,QC,ESOIL)
-                !ENDIF
-            
+                
                 ! Or, do not calculate heat balance. Either if using measured ET for water balance,
-                ! or if not simulating soil evaporation (which would render heat balance meaningless anyway).
-                !IF(USEMEASET.EQ.1.OR.SIMSOILEVAP.EQ.0)THEN
+                ! or if not simulating soil evaporation (which would render soil heat balance meaningless anyway).
                 ELSE 
                     QE = 0
                     QH = 0
