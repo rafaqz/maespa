@@ -709,6 +709,9 @@ PROGRAM maespa
                 NSIDES = NSIDESSPEC(ISPEC)
     
                 MINLEAFWP = MINLEAFWPSPEC(ISPEC)
+                FRACROOT = FRACROOTSPEC(1:MAXSOILLAY,ISPEC)
+                ROOTMASS = ROOTMASSSPEC(1:MAXSOILLAY,ISPEC)
+                ROOTLEN = ROOTLENSPEC(1:MAXSOILLAY,ISPEC)
                 
                 ! Sort the trees every timestep.
                 ! This should be done outside the hourly loop, and stored in an array.
