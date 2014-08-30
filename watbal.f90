@@ -1941,12 +1941,6 @@ END SUBROUTINE INITWATBAL
             ENDIF
         ENDIF
         
-! Add understorey ET to ETMM, if simulated:
-        IF(ISIMUS.EQ.1)THEN
-          ETUSMM = FH2OUS * SPERHR * 18 * 1E-06
-          ETMM = ETMM + ETUSMM
-        ENDIF
-    
       ENDIF
     
 ! Alternatively, do water balance only based on the target trees (no scaling to stand).
@@ -1963,6 +1957,13 @@ END SUBROUTINE INITWATBAL
       
       ENDIF
       
+      
+! Add understorey ET to ETMM, if simulated:
+      IF(ISIMUS.EQ.1)THEN
+          ETUSMM = FH2OUS * SPERHR * 18 * 1E-06
+          ETMM = ETMM + ETUSMM
+      ENDIF
+    
       RETURN
       END
 
