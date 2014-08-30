@@ -1817,10 +1817,8 @@ END SUBROUTINE INITWATBAL
 
       SUBROUTINE SCALEUP(IHOUR,USESTAND,NOTARGETS,NOALLTREES,FOLT, &
                          ITARGETS,ISPECIES,NOSPEC,TOTLAI,STOCKING,SCLOSTTREE, &
-                         THRAB,RADABV,FH2O, &
-                         PLOTAREA,DOWNTHTREE, &
-                         RGLOBABV,RGLOBUND,RADINTERC, &
-                         FRACAPAR, &
+                         THRAB,RADABV,FH2O,PLOTAREA,DOWNTHTREE, &
+                         RGLOBABV,RGLOBUND,RADINTERC,FRACAPAR,&
                          ISIMUS,FH2OUS,THRABUS,PARUSMEAN, &
                          SCLOSTTOT,GSCAN,WIND,ZHT,Z0HT,ZPD, &
                          PRESS,TAIR,VPD,ETMM,ETUSMM,ETMMSPEC)
@@ -1840,7 +1838,7 @@ END SUBROUTINE INITWATBAL
     REAL SCLOSTTREE(MAXT,3),GSCAN(MAXT,MAXHRS)
     REAL THRAB(MAXT,MAXHRS,3),RADABV(MAXHRS,3)
     REAL DOWNTHTREE(MAXT)
-    REAL FH2O(MAXT,MAXHRS),PLOTAREA
+    REAL FH2O(MAXT,MAXHRS),PLOTAREA,TOTSPECET
     REAL TOTLATAR,TREELAMEAN,ALLTREELAMEAN,TOTLAI
     REAL STOCKING,THRABUS,PARUSMEAN
     REAL RGLOBABV,RGLOBABV12,RGLOBUND,RADINTERC12,RADINTERC
@@ -1871,7 +1869,27 @@ END SUBROUTINE INITWATBAL
       ELSE
           EXPFACTORS(1:NOTARGETS) = 1.0
       ENDIF
+
+! If multiple species, calculate ET by species. If USESTAND, this is used to divide total recalculated
+! ET into the species (an approximate method anyway!), if USESTAND=1, it is the final result for ETMMSPEC.
+      IF(NOSPEC.GT.1)THEN
+          
+        DO ISPEC=1,NOSPEC
             
+            WTOT = 0.0
+            DO I=1,NOTARGETS
+              IF(ISPECIES(ITARGETS(I)).EQ.ISPEC)THEN
+                 WTOT = WTOT + FH2O(I,IHOUR)
+              ENDIF
+              
+            ENDDO
+            
+            ETMMSPEC(ISPEC) = WTOT * SPERHR * 1E-06 * 18 * 1E-03 / PLOTAREA
+        
+        ENDDO
+      
+      ENDIF
+      
 ! Get total radiation above and under the canopy.
       CALL GETRGLOB(IHOUR,SCLOSTTREE,THRAB,RADABV, &
                       NOTARGETS,NOALLTREES,PLOTAREA, &
@@ -1912,6 +1930,15 @@ END SUBROUTINE INITWATBAL
             RADINTERCTREE,   &
             VPD,GSCANAV,STOCKING) * CONV
         
+! Recalculate ETMMSPEC to arrive at same total; this is an approximate method to apportion
+! total ET into species components.
+        IF(NOSPEC.GT.1)THEN
+            TOTSPECET = SUM(ETMMSPEC(1:NOSPEC))
+            DO I=1,NOSPEC
+                ETMMSPEC(I) = ETMMSPEC(I) * ETMM / TOTSPECET
+            ENDDO
+        ENDIF
+        
 ! Add understorey ET to ETMM, if simulated:
         IF(ISIMUS.EQ.1)THEN
           ETUSMM = FH2OUS * SPERHR * 18 * 1E-06
@@ -1922,24 +1949,6 @@ END SUBROUTINE INITWATBAL
     
 ! Alternatively, do water balance only based on the target trees (no scaling to stand).
       IF(USESTAND.EQ.0) THEN
-
-      IF(NOSPEC.GT.1)THEN
-          
-        DO ISPEC=1,NOSPEC
-            
-            WTOT = 0.0
-            DO I=1,NOTARGETS
-              IF(ISPECIES(ITARGETS(I)).EQ.ISPEC)THEN
-                 WTOT = WTOT + FH2O(I,IHOUR)
-              ENDIF
-              
-            ENDDO
-            
-            ETMMSPEC(ISPEC) = WTOT * SPERHR * 1E-06 * 18 * 1E-03 / PLOTAREA
-        
-        ENDDO
-      
-      ENDIF
       
         ! Total water use, based on FH2O (not recalculated!)
           WTOT = 0.0

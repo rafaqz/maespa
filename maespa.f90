@@ -711,6 +711,7 @@ PROGRAM maespa
     
                 ! Assign water balance and hydraulics.
                 MINLEAFWP = MINLEAFWPSPEC(ISPEC)
+                ! If multiple species but only one root distribution.
                 IF(NOROOTSPEC.EQ.1.AND.NOSPEC.GT.1)THEN
                     ICHOOSE = 1
                 ELSE
@@ -722,7 +723,6 @@ PROGRAM maespa
                 
                 ! Sort the trees every timestep.
                 ! This should be done outside the hourly loop, and stored in an array.
-
                 CALL SORTTREES(NOALLTREES,NOTREES,ITREE,DXT1,DYT1,DZT1,RXTABLE1,RYTABLE1,RZTABLE1,ZBCTABLE1,&
                                 FOLTABLE1,DIAMTABLE1,DXT,DYT,DZT,RXTABLE,RYTABLE,RZTABLE,FOLTABLE,ZBCTABLE, &
                                 DIAMTABLE,ISPECIES,ISPECIEST,IT)
