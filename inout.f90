@@ -2281,13 +2281,13 @@ SUBROUTINE OUTPUTWATBAL(IDAY,IHOUR,NROOTLAYER,NLAYER,          &
                            FRACWATER(1),FRACWATER(2),FRACAPAR
 
         ! Write volumetric water content by layer:
-        WRITE (UWATLAY, 521) FRACWATER(1:60)
+        WRITE (UWATLAY, 521) FRACWATER(1:NLAYER)
 
         ! write swp by layer
-        WRITE (USWPLAY, 521) SOILWP(1:60) ! mathias décembre 2012
+        WRITE (USWPLAY, 521) SOILWP(1:NLAYER) ! mathias décembre 2012
 
         ! Write soil temperature by layer:
-        WRITE (USOILT, 522) SOILTEMP(1:20)
+        WRITE (USOILT, 522) SOILTEMP(1:NLAYER)
 
         ! Write fractional water uptake by layer (but no more than 40 laye
         IHOWMANY = MIN(40, NROOTLAYER)
@@ -2308,13 +2308,13 @@ SUBROUTINE OUTPUTWATBAL(IDAY,IHOUR,NROOTLAYER,NLAYER,          &
                            TOTLAI,TAIR, SOILTEMP(1),SOILTEMP(2),            &
                            FRACWATER(1),FRACWATER(2)
         ! Write volumetric water content by layer:
-        WRITE (UWATLAY) FRACWATER(1:25)
+        WRITE (UWATLAY) FRACWATER(1:NLAYER)
 
         ! write swp by layer
-        WRITE (USWPLAY) SOILWP(1:25) ! mathias décembre 2012
+        WRITE (USWPLAY) SOILWP(1:NLAYER) ! mathias décembre 2012
 
         ! Write soil temperature by layer:
-        WRITE (USOILT) SOILTEMP(1:20)
+        WRITE (USOILT) SOILTEMP(1:NLAYER)
 
         ! Write fractional water uptake by layer (but no more than 40 laye
         IHOWMANY = MIN(40, NROOTLAYER)

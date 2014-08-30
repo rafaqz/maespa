@@ -1908,7 +1908,7 @@ END SUBROUTINE INITWATBAL
       
 
 ! Recalculate canopy water use, if scaling to the entire stand.
-      IF(USESTAND.GT.0.0)THEN
+      IF(USESTAND.GT.0)THEN
 
 ! Estimate average conductance for all trees, based on
 ! leaf area difference:
@@ -1934,9 +1934,11 @@ END SUBROUTINE INITWATBAL
 ! total ET into species components.
         IF(NOSPEC.GT.1)THEN
             TOTSPECET = SUM(ETMMSPEC(1:NOSPEC))
-            DO I=1,NOSPEC
-                ETMMSPEC(I) = ETMMSPEC(I) * ETMM / TOTSPECET
-            ENDDO
+            IF(TOTSPECET.GT.0.0)THEN
+                DO I=1,NOSPEC
+                    ETMMSPEC(I) = ETMMSPEC(I) * ETMM / TOTSPECET
+                ENDDO
+            ENDIF
         ENDIF
         
 ! Add understorey ET to ETMM, if simulated:
