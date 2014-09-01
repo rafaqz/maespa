@@ -1,6 +1,6 @@
-Bago Mean Phy data JUN 06 HK RD & GS-SW
+Tumbarumba example physiology
 	
-nmber of age classes of foliage (two, but no difference)
+number of age classes of foliage
 &noages
 noagep = 1
 /
@@ -10,7 +10,7 @@ proportion of leaf area in each age class
 prop = 1.0
 /
 	
-reflectance and transmittance (obtain from remote sensing group)
+reflectance and transmittance
 &absorp
 nolayers = 1
 rhosol = 0.10 0.30 0.05
@@ -22,7 +22,6 @@ arho = 0.082		0.49	0.05
 nodates = 1
 condunits = 'H2O'
 /
-
 
 &bbmgs
 dates = '01/01/02'

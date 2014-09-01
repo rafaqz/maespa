@@ -8,7 +8,6 @@ iohist=0
 iowatbal=1
 /
 
-Try other dates here.
 &dates
 startdate = '22/02/01'
 enddate = '22/03/01'
@@ -17,8 +16,6 @@ enddate = '22/03/01'
 &treescon	
 itargets = 153 114 191 224 132 137 150 227 102 84 189 190 99 120 171
 /							
-
-
 
 &diffang					
 nolay = 6

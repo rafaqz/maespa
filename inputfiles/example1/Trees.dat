@@ -1,4 +1,3 @@
-
 A one hectare plot with 304 trees	
 &plot						
 x0	=	0				
@@ -15,7 +14,7 @@ notrees	=	304
 &aerodyn			
 zht	=	30
 zpd	=	16
-z0ht	=	3
+z0ht = 3
 /		
 
 &xy
