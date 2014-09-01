@@ -4,7 +4,7 @@ Example water balance parameters.
 keepwet = 0
 simtsoil = 1
 simsoilevap = 1
-reassignrain = 1
+reassignrain = 0
 wsoilmethod = 1
 retfunction = 1
 equaluptake = 0
