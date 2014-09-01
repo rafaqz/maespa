@@ -11,7 +11,6 @@ bearing	=	45
 notrees	=	6
 /						
 
-Ca. standard aerodynamics for canopy of 30m height; Jones 1992.
 &aerodyn			
 zht	=	30
 zpd	=	16

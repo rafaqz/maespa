@@ -1,6 +1,6 @@
 Example physiology file.
 	
-nmber of age classes of foliage (two, but no difference)
+number of age classes of foliage (two, but no difference)
 &noages
 noagep = 1
 /
@@ -10,7 +10,7 @@ proportion of leaf area in each age class
 prop = 1.0
 /
 	
-reflectance and transmittance (obtain from remote sensing group)
+reflectance and transmittance
 &absorp
 nolayers = 1
 rhosol = 0.10 0.30 0.05
