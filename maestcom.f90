@@ -7,7 +7,7 @@ MODULE maestcom
     ! Maximum dimensions of arrays
     INTEGER, PARAMETER :: MAXT = 1500        ! Maximum no. of trees in plot
     INTEGER, PARAMETER :: MAXLAY = 15         ! Maximum no. of layers for radiation
-    INTEGER, PARAMETER :: MAXSOILLAY = 25    ! Maximum no. of layers of soil (RAD)
+    INTEGER, PARAMETER :: MAXSOILLAY = 75    ! Maximum no. of layers of soil (RAD)
     INTEGER, PARAMETER :: MAXSP = 3          ! Maximum no. of species (RAD).
     INTEGER, PARAMETER :: MAXP = 1500        ! Maximum no. of gridpoints -- MUST BE EQUAL TO OR LARGER THAN MAXT !!!!
     INTEGER, PARAMETER :: MAXC = 3            ! Maximum no. of leaf area distributions

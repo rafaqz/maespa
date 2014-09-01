@@ -1969,6 +1969,9 @@ END SUBROUTINE INITWATBAL
                     ETMMSPEC(I) = ETMMSPEC(I) * ETMM / TOTSPECET
                 ENDDO
             ENDIF
+        ELSE
+            ETMMSPEC(1) = ETMM
+            
         ENDIF
         
       ENDIF
