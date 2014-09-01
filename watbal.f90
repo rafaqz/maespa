@@ -142,7 +142,7 @@ END SUBROUTINE INITWATBAL
 
 !**********************************************************************
 
-      SUBROUTINE CALCSOILPARS(NLAYER,NROOTLAYER,SOILWP,FRACWATER, &
+      SUBROUTINE CALCSOILPARS(NLAYER,NROOTLAYER,ISPEC,SOILWP,FRACWATER, &
                             FRACORGANIC,POREFRAC,SOILCOND,THERMCOND, &
                             ROOTMASS,ROOTLEN,LAYTHICK,ICEPROP, &
                             EQUALUPTAKE,RETFUNCTION, &
@@ -166,7 +166,7 @@ END SUBROUTINE INITWATBAL
       USE metcom
       IMPLICIT NONE
       INTEGER I, NLAYER, NROOTLAYER, EQUALUPTAKE, RETFUNCTION, SOILDATA
-      INTEGER USEMEASSW
+      INTEGER USEMEASSW,ISPEC
       REAL BPAR(MAXSOILLAY),PSIE(MAXSOILLAY),KSAT(MAXSOILLAY)
       REAL ALPHARET(MAXSOILLAY),WS(MAXSOILLAY),WR(MAXSOILLAY),NRET(MAXSOILLAY)
       REAL SOILWP(MAXSOILLAY),FRACWATER(MAXSOILLAY),POREFRAC(MAXSOILLAY)
@@ -208,21 +208,23 @@ END SUBROUTINE INITWATBAL
 
         ENDIF
       ENDIF
+      
+      
+    CALL SOILRESCALC(USEMEASSW, SOILCOND,ROOTRESIST, &
+                            ROOTMASS,ROOTLEN,LAYTHICK,ROOTRAD, &
+                            NROOTLAYER,SOILRRES1,SOILRRES2)
 
-      CALL SOILRESCALC(USEMEASSW, SOILCOND,ROOTRESIST, &
-                        ROOTMASS,ROOTLEN,LAYTHICK,ROOTRAD, &
-                       NROOTLAYER,SOILRRES1,SOILRRES2)
+    ! Fractional water uptake from each soil layer
+    ! Note that water is not actually taken up yet.
+    CALL WATERUPTAKELAYER(SOILWP,SOILRRES1,SOILRRES2, &
+                                ROOTRESFRAC, &
+                                MINROOTWP,TOTLAI, &
+                                ICEPROP,EQUALUPTAKE, &
+                                USEMEASSW, SOILDATA, SOILMOISTURE, &
+                                ROOTLEN,NROOTLAYER,WEIGHTEDSWP, &
+                                FRACUPTAKE,TOTSOILRES,LAYTHICK, &
+                                TOTESTEVAP)
 
-! Fractional water uptake from each soil layer
-! Note that water is not actually taken up yet.
-      CALL WATERUPTAKELAYER(SOILWP,SOILRRES1,SOILRRES2, &
-                            ROOTRESFRAC, &
-                            MINROOTWP,TOTLAI, &
-                            ICEPROP,EQUALUPTAKE, &
-                            USEMEASSW, SOILDATA, SOILMOISTURE, &
-                            ROOTLEN,NROOTLAYER,WEIGHTEDSWP, &
-                            FRACUPTAKE,TOTSOILRES,LAYTHICK, &
-                            TOTESTEVAP) ! rajout LAYTHICK mathias décembre 2012
       
 ! Aerodynamic conductance between soil surface and air,
 ! assuming turbulent transfer (so that conductance is the same for
@@ -271,6 +273,7 @@ END SUBROUTINE INITWATBAL
         REAL ICEPROP(MAXSOILLAY),PPTGAIN(MAXSOILLAY)
         REAL BPAR(MAXSOILLAY), KSAT(MAXSOILLAY)
         REAL DRAINLIMIT(MAXSOILLAY)
+        real check1, check2, check3, check4
         REAL MAXSTORAGE,LAMBDASOIL,ETMMSPEC(MAXSP)
         REAL SOILTK,TAIRK,VPDPA,VPDKPA,QEM,QEMM,SURFACE_WATERMM
         REAL PPT,EVAPSTORE,DRAINSTORE,WSOILROOT,TOTESTEVAPMM
@@ -355,8 +358,8 @@ END SUBROUTINE INITWATBAL
                 
                 !       Water loss from each rooted layer (i.e. *root water uptake)
                 ETLOSS = ETMMSPEC(ISPEC) / 1000
-                FRACUPTAKE = FRACUPTAKESPEC(1:MAXSOILLAY, ISPEC)
-                
+                FRACUPTAKE(1:MAXSOILLAY) = FRACUPTAKESPEC(1:MAXSOILLAY, ISPEC)
+
                 DO I=1,NROOTLAYER
                     WATERLOSS(I) = WATERLOSS(I) + ETLOSS*FRACUPTAKE(I)
                 ENDDO
@@ -364,6 +367,13 @@ END SUBROUTINE INITWATBAL
             ENDDO
         ENDIF
 
+        check1 = sum(fracuptake(1:nrootlayer))
+        check2 = etmm/1000 + qem
+        check3 = sum(etmmspec(1:nospec))/1000 + qem
+        check4 = sum(waterloss(1:nrootlayer))
+        
+  
+        
 !       Calculate drainage for each soil layer
         DO J = 1,NLAYER
         CALL SOIL_BALANCE(J, POREFRAC, ICEPROP, FRACWATER, &
@@ -763,9 +773,15 @@ END SUBROUTINE INITWATBAL
       LA = 0.0
       DO I = 1,NROOTLAYER
         DEPTH = SUM(LAYTHICK(1:I)) - LAYTHICK(I)/2
-        LA = LA +  DEPTH/ROOTLEN(I)
+        IF(ROOTLEN(I).GT.0.0)THEN
+            LA = LA +  DEPTH/ROOTLEN(I)
+        ENDIF
       ENDDO
-      ROOTRESCONS = ROOTRESIST / LA
+      IF(LA.GT.0.0)THEN
+        ROOTRESCONS = ROOTRESIST / LA
+      ELSE
+        ROOTRESCONS = 1E09   ! Arbitrarily large number
+      ENDIF
 
        DO I=1,NROOTLAYER
 
@@ -783,34 +799,40 @@ END SUBROUTINE INITWATBAL
             ELSE
                 
                     ! Reformulated to match Duursma et al. 2008.
+                    IF(ROOTLEN(I).GT.0.0)THEN
+                        
+                        ! Radius of soil cylinder around root in single-root model               
+                        RS = SQRT(1./(ROOTLEN(I)*PI))
                 
-                    ! Radius of soil cylinder around root in single-root model               
-                    RS = SQRT(1./(ROOTLEN(I)*PI))
+                        LOGRR = LOG(RS/ROOTRAD)
+                        IF(LOGRR.LT.0)CALL SUBERROR( &
+                        'Root radius larger than soil-root radius - fine root density too high!', &
+                         IWARN,0)
                 
-                    LOGRR = LOG(RS/ROOTRAD)
-                    IF(LOGRR.LT.0)CALL SUBERROR( &
-                    'Root radius larger than soil-root radius - fine root density too high!', &
-                     IWARN,0)
+                        KS = ROOTLEN(I)*LAYTHICK(I)*2.0*pi*KSOIL/LOGRR
                 
-                    KS = ROOTLEN(I)*LAYTHICK(I)*2.0*pi*KSOIL/LOGRR
+                        SOILR1(I) = 1/KS
                 
-                    SOILR1(I) = 1/KS
-                
-                    ! As in SPA:
-                    !RS2 = LOG(RS/ROOTRAD)/(2.0*PI*ROOTLEN(I)*LAYTHICK(I)*LSOIL)
-                    ! convert from MPa s m2 m-3 to MPa s m2 mmol-1
-                    !SOILR1(I) = RS2*1E-6*18*0.001
+                        ! As in SPA:
+                        !RS2 = LOG(RS/ROOTRAD)/(2.0*PI*ROOTLEN(I)*LAYTHICK(I)*LSOIL)
+                        ! convert from MPa s m2 m-3 to MPa s m2 mmol-1
+                        !SOILR1(I) = RS2*1E-6*18*0.001
 
-                    ! Note : this component is calculated but not used (see wateruptakelayer proc). More research needed!
-                    ! Second component of below ground resistance related to root hydraulics.
-                    SOILR2(I) = ROOTRESCONS * DEPTH / ROOTLEN(I)
-
+                        ! Note : this component is calculated but not used (see wateruptakelayer proc). More research needed!
+                        ! Second component of below ground resistance related to root hydraulics.
+                    
+                        SOILR2(I) = ROOTRESCONS * DEPTH / ROOTLEN(I)
+                    ELSE
+                        SOILR2(I) = 0.0
+                        SOILR1(I) = 0.0
+                    ENDIF
+                    
                     SOILRRES(I) = SOILR1(I) + SOILR2(I)
             ENDIF
 
        ENDDO
-      
-       
+
+    
       ! When using measured soil water, use water content of top layer,
       ! but all fine roots to calculate total soil conductance
       IF(USEMEASSW.EQ.1)THEN
@@ -863,9 +885,8 @@ END SUBROUTINE INITWATBAL
         IMPLICIT NONE
     
         INTEGER I,NROOTLAYER,EQUALUPTAKE,SOILDATA,USEMEASSW
-        INTEGER TMP1,TMP2
-        REAL ESTEVAP(MAXSOILLAY),FRACUPTAKE(MAXSOILLAY)
-        REAL FRACUPTAKE2(MAXSOILLAY), LAYTHICK(MAXSOILLAY)  ! rajout laythick mathias décembre 2012 modification
+        REAL ESTEVAP(MAXSOILLAY),FRACUPTAKE(MAXSOILLAY),RSUM
+        REAL FRACUPTAKE2(MAXSOILLAY), LAYTHICK(MAXSOILLAY) 
         REAL ICEPROP(MAXSOILLAY), SOILWP(MAXSOILLAY)
         REAL SOILRRES1(MAXSOILLAY),SOILRRES2(MAXSOILLAY)
         REAL SOILRRES(MAXSOILLAY),RESTOT(MAXSOILLAY)
@@ -892,7 +913,11 @@ END SUBROUTINE INITWATBAL
 
                 ! Estimated maximum uptake rate with the current soil watyer
                 ! if aboveground resistance is zero.
-                ESTEVAP(I)=(SOILWP(I)-MINROOTWP)/SOILRRES(I)
+                IF(SOILRRES(I).GT.0.0)THEN
+                    ESTEVAP(I)=(SOILWP(I)-MINROOTWP)/SOILRRES(I)
+                ELSE
+                    ESTEVAP(I)=0.0   !  When no roots present
+                ENDIF
 
                 ! No negative uptake.
                 ESTEVAP(I)=MAX(0.,ESTEVAP(I))
@@ -922,17 +947,22 @@ END SUBROUTINE INITWATBAL
         IF(TOTESTEVAP.GT.0.)THEN
             WEIGHTEDSWP = WEIGHTEDSWP / TOTESTEVAP       
         ELSE
-            !WEIGHTEDSWP = SUM(SOILWP(1:NROOTLAYER)) / NROOTLAYER
-            WEIGHTEDSWP =0
+            WEIGHTEDSWP = 0.0
             DO I=1,NROOTLAYER
-                WEIGHTEDSWP = WEIGHTEDSWP + SOILWP(I) * LAYTHICK(I)    ! modification mathias décembre 2012
+                WEIGHTEDSWP = WEIGHTEDSWP + SOILWP(I) * LAYTHICK(I)
             ENDDO
-            WEIGHTEDSWP = WEIGHTEDSWP / sum(LAYTHICK(1:NROOTLAYER))
+            WEIGHTEDSWP = WEIGHTEDSWP / SUM(LAYTHICK(1:NROOTLAYER))
         
         ENDIF        
 
-        ! Resistances are in parallel. This varibale is also not used.
-        TOTSOILRES = 1/SUM(1/SOILRRES(1:NROOTLAYER))
+        ! Resistances are in parallel. This variable is also not used.
+        RSUM = 0.0
+        DO I=1,NROOTLAYER
+            IF(SOILRRES(I).GT.0.0)THEN
+                RSUM = RSUM + 1/SOILRRES(I)
+            ENDIF
+        ENDDO
+        TOTSOILRES = 1/RSUM
         
         ENDIF
 
@@ -956,8 +986,8 @@ END SUBROUTINE INITWATBAL
               ! No water uptake possible.
               FRACUPTAKE2(I) = 0.
           ENDIF
-       
         ENDDO
+        
         IF(SUM(FRACUPTAKE2(1:NROOTLAYER)).GT.0)THEN
           FRACUPTAKE2 = FRACUPTAKE2 / SUM(FRACUPTAKE2(1:NROOTLAYER))  ! Make sure that it sums to 1.
         ELSE
@@ -978,7 +1008,7 @@ END SUBROUTINE INITWATBAL
         ENDIF
 
         ! Error check.
-        FRACSUM = SUM(FRACUPTAKE)
+        FRACSUM = SUM(FRACUPTAKE(1:NROOTLAYER))
         IF(FRACSUM.GT.0.AND.FRACSUM.LT.(1.0 - 1E-05))THEN
             WRITE(*,*)'Warning: FRACUPTAKE sum is',FRACSUM
         ENDIF

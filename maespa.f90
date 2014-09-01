@@ -132,6 +132,10 @@ PROGRAM maespa
                         DATESKP,NOKPDATES,DATESROOT,NOROOTDATES,NOROOTSPEC)
     ENDIF
     
+
+
+                
+    
     ! Open met data file (must be done after ISTART & IEND read)
     CALL OPENMETF(ISTART,IEND,CAK,PRESSK,SWMIN,SWMAX,USEMEASET,DIFSKY,ALAT,TTIMD,DELTAT,&
                     MFLAG,METCOLS,NOMETCOLS,MTITLE,MSTART,in_path)
@@ -183,6 +187,7 @@ PROGRAM maespa
                                 FALPHATABLESPEC,DATESLIA,NOLIADATES,FALPHASPEC,NSPECIES, &
                                 ISMAESPA)
         
+
         IF(ISMAESPA)THEN
             CALL INTERPOLATEW(IDAY,ISTART,NOKPDATES,DATESKP,PLANTKTABLE,PLANTK,  &
                               NOROOTDATES,DATESROOT,NOROOTSPEC,ROOTRADTABLE,ROOTDENSTABLE,ROOTMASSTOTTABLE, &
@@ -785,12 +790,14 @@ PROGRAM maespa
                                             SOILDEPTH,SOILDATA, SOILMOISTURE)
                 
                     ! Soil water potential, conductivity & conductance, fractional uptake (but no uptake yet).
-                    CALL CALCSOILPARS(NLAYER,NROOTLAYER,SOILWP,FRACWATER,FRACORGANIC,POREFRAC,SOILCOND,THERMCOND,   &
+                    CALL CALCSOILPARS(NLAYER,NROOTLAYER,ISPEC,SOILWP,FRACWATER,FRACORGANIC,POREFRAC,SOILCOND,THERMCOND,   &
                                         ROOTMASS,ROOTLEN,LAYTHICK,ICEPROP,EQUALUPTAKE,RETFUNCTION,USEMEASSW,        &
                                         SOILDATA, SOILMOISTURE,PSIE,BPAR,KSAT,ROOTRESIST,ROOTRESFRAC,    &
                                         ROOTRAD,MINROOTWP,TOTLAI,WINDAH(IHOUR),ZHT,Z0HT,GAMSOIL,   &
                                         WEIGHTEDSWP,TOTESTEVAP, &
                                         FRACUPTAKESPEC(1:MAXSOILLAY, ISPEC),TOTSOILRES,ALPHARET,WS,WR,NRET)
+                    
+
                     
                     ! Soil surface T for SCATTER routine:
                     IF(SIMTSOIL.EQ.0)THEN  ! No Tsoil simulated.
