@@ -1,4 +1,3 @@
-
 A soil-plant-atmosphere model based on MAESTRA and SPA
 ===================================================
   
@@ -8,4 +7,4 @@ Compiles with:
 
 A Makefile is provided to compile Maes* on a Mac (thanks to Martin de Kauwe and Alejandro Morales).
 
-The dependency on IFPORT has been recently removed. The same code now compiles with both compilers.
+[See this website for a full description of Maespa](http://maespa.github.io)
