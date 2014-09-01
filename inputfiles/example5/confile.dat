@@ -1,0 +1,47 @@
+Bago BB gs
+	
+flags to indicate which input  output files to use.
+&control
+iohrly=0
+iotutd=9       
+ioresp=0       
+iohist=0
+/
+
+&species
+nspecies = 2
+speciesnames = 'eucalyptus' 'angophora'
+phyfiles = 'phy1.dat' 'phy2.dat'
+strfiles = 'str1.dat' 'str2.dat'
+/
+
+dates for simulation start and end (must overlap with met file). 
+&dates
+startdate = '01/10/01'
+enddate = '01/01/02'
+/
+	
+indicate which target tree(s) to use. 
+&treescon	
+notrees = 6
+itargets = 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18
+/							
+
+
+number of angles and layers to integrate over. 
+&diffang					
+nolay = 6
+pplay = 12
+nzen = 5
+naz= 11
+/
+
+choice of submodels. 
+&model
+modelgs = 2
+modelrd = 0
+modeljm = 0
+itermax = 0
+modelss = 0
+/
+
