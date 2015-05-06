@@ -241,8 +241,8 @@ SUBROUTINE OPENMETF(ISTART,IEND,CAK,PRESSK,SWMIN,SWMAX,USEMEASET,DIFSKY,ALAT,TTI
             ELSEIF (COLUMNS(I).EQ.'VMFD')  THEN
                 ICOL = MHMFD
             ELSE
-                CALL SUBERROR('ERROR: Header incorrectly specified in Met file',&
-                              IFATAL,0) 
+                CALL SUBERROR('WARNING: Header includes unknown variable - ignored',&
+                              IWARN,0) 
             ENDIF
             
             IF (ICOL.NE.MISSING) METCOLS(ICOL) = I

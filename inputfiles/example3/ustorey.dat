@@ -25,10 +25,6 @@ ELP = 1.0
 NALPHA = 5					
 /					
 
-&PHYCON
-C4FRAC = 0.5
-/
-
 &JMAXPARS
 IECO = 0
 AJQ = 0.054
@@ -48,9 +44,6 @@ UNMIN =0.0
 ABSRP = 0.85
 /
 
-&CICA
-CICARAT = 0.7
-/
 
 &ALLFOLN
 NODATES = 1
@@ -58,15 +51,24 @@ VALUES =  1.0
 DATES = '01/01/98'
 /
 
+
 &BBGS
 G0 = 0.03
 G1 = 6
+/
+
+&CICA
+CICARAT = 0.7
 /
 
 &RDPARS
 RD = 0.36
 RDK = 0.0693
 RDT = 20
+/
+
+&PHYCON
+C4FRAC = 0.5
 /
 
 &USC4PARS

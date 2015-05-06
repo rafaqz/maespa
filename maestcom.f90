@@ -10,13 +10,10 @@ MODULE maestcom
     INTEGER, PARAMETER :: MAXSOILLAY = 75    ! Maximum no. of layers of soil (RAD)
     INTEGER, PARAMETER :: MAXSP = 3          ! Maximum no. of species (RAD).
     INTEGER, PARAMETER :: MAXP = 1500        ! Maximum no. of gridpoints -- MUST BE EQUAL TO OR LARGER THAN MAXT !!!!
-    INTEGER, PARAMETER :: MAXC = 3            ! Maximum no. of leaf area distributions
-    INTEGER, PARAMETER :: MAXANG = 20          ! Maximum no. of zenith & leaf angles
-    INTEGER, PARAMETER :: MAXD = 13           ! For resp prog
-    INTEGER, PARAMETER :: MAXDATE = 3      ! Maximum no. of dates for tree or physiol parameters
-    !INTEGER, PARAMETER :: maxdate = 5        ! Maximum no. of dates for physiol parameters
-    !INTEGER, PARAMETER :: MAXMET = 18         ! Maximum columns in met data file
-    ! changed by mgdk, just to try and compile, not 18 but MHET has 20?!!
+    INTEGER, PARAMETER :: MAXC = 3           ! Maximum no. of leaf area distributions
+    INTEGER, PARAMETER :: MAXANG = 20        ! Maximum no. of zenith & leaf angles
+    INTEGER, PARAMETER :: MAXD = 13          ! For resp prog
+    INTEGER, PARAMETER :: MAXDATE = 1000        ! Maximum no. of dates for tree or physiol parameters
     INTEGER, PARAMETER :: MAXMET = 20         ! Maximum columns in met data file
     INTEGER, PARAMETER :: MAXHISTO = 200      ! Maximum bins in PAR histogram
     REAL, PARAMETER    :: TOL = 0.02          ! Tolerance for leaf temp iteration
@@ -100,8 +97,8 @@ MODULE maestcom
     INTEGER, PARAMETER :: UPARUS = 33         ! uspar.dat
     INTEGER, PARAMETER :: UWATDAY = 34        ! watbalday.dat
     INTEGER, PARAMETER :: UDAYHDR = 35        ! Dayflx_hdr.asc
-    INTEGER, PARAMETER :: UMET = 36            ! Met.dat
-    INTEGER, PARAMETER :: UTUTD = 37           ! Tutd.dat
+    INTEGER, PARAMETER :: UMET = 36           ! Met.dat
+    INTEGER, PARAMETER :: UTUTD = 37          ! Tutd.dat
     INTEGER, PARAMETER :: UHRLYHDR = 38 
     INTEGER, PARAMETER :: ULAYHDR = 39 
     INTEGER, PARAMETER :: UHISTHDR = 40
@@ -116,8 +113,6 @@ MODULE maestcom
     INTEGER, PARAMETER :: USUNLA = 49    ! modification Mathias 27/11/12
     INTEGER, PARAMETER :: USWPLAY = 50    ! modification Mathias décembre 2012
     
-    
-
     ! Flags passed to error handling subroutine
     INTEGER, PARAMETER :: IFATAL = 100        ! Error was fatal - stop program
     INTEGER, PARAMETER :: IWARN = 200         ! Error non-fatal: just print warning
@@ -133,8 +128,7 @@ MODULE maestcom
     ! Flags to indicate which program it is
     INTEGER, PARAMETER :: INORMAL = 0         ! Maestra, Maeshr
     INTEGER, PARAMETER :: ITEST = 1           ! Maestest
-
-	  
+  
     !COMMON /HRS/ HHRS, KHRS, SPERHR ! Make KHRS and HHRS available throughout the program
 !    INTEGER, PARAMETER :: KHRS = 24                  ! Number of time intervals in a day
 !    REAL, PARAMETER :: HHRS = (KHRS) / 2.0           ! Half a day length
