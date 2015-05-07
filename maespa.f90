@@ -875,6 +875,7 @@ PROGRAM maespa
                                             PSUS(IHOUR,IPTUS))
                                 GSIPT = 0.0
                                 ETUS = 0.0
+                                
                             ELSE
                                 
                                 ! Otherwise call BEWDY model to calculate understorey photosynthesis
@@ -919,7 +920,7 @@ PROGRAM maespa
                                 ENDIF
                                 
                                 ! Net photosynthesis
-                                PSUS(IHOUR,IPTUS) = PSUS(IHOUR,IPTUS) + C4FRAC*PSC4 + (1.0 - C4FRAC)*PSC3 - RD0US
+                                PSUS(IHOUR,IPTUS) = C4FRAC*PSC4 + (1.0 - C4FRAC)*PSC3 - RD0US
                                 
                                 ! Transpiration
                                 ETUS(IHOUR,IPTUS) = C4FRAC*ETC4 + (1.0 - C4FRAC)*PSC3
