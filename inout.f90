@@ -145,7 +145,7 @@ SUBROUTINE OPENINPUTF(CTITLE,TTITLE,PTITLE,STITLE,WTITLE,UTITLE,IWATFILE,KEEPZEN
        
     ! Input file for understorey parameters.
     ! Or if filename is missing:
-    INQUIRE (FILE=trim(in_path)//'USTOREY.DAT', EXIST=EXT)
+    INQUIRE (FILE=trim(in_path)//'ustorey.dat', EXIST=EXT)
     IF(.NOT.EXT)THEN
         CALL SUBERROR('USTOREY.DAT NOT FOUND. NO UNDERSTOREY SIMULATED.',IWARN, 0)
         ISIMUSI = 0
