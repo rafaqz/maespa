@@ -500,7 +500,7 @@ PROGRAM maespa
                         !! Sort overstorey dimensions, save in separate arrays.
                         !! Can move this out of loop, only needs to be done once.
                         CALL SORTTREESP( &
-                         AX,AY,NOALLTREES,NOTREES, &  ! NOTREES no longer used in SORTTREESP
+                         AX,AY,NOALLTREES,NOTREESTEST, &  
                          DXT1,DYT1,DZT1,RXTABLE1,RYTABLE1,RZTABLE1, &
                          ZBCTABLE1,FOLTABLE1,DIAMTABLE1, &
                          DXTP,DYTP,DZTP,RXTABLEP,RYTABLEP,RZTABLEP, &
