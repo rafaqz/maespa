@@ -3235,7 +3235,7 @@ SUBROUTINE READGS(UFILE,I,MODELGS,                                              
     WLEAF = 0.0
     WC1 = 0.0
     WC2 = 0.0
-    VPDMIN = 50  ! Minimum VPD to feed to GS model (caps gs at low VPD)
+    VPDMIN = 0.05  ! Minimum VPD to feed to GS model (caps gs at low VPD)
     GK = 0.5
     NODATESGS = 1
     NODATESWLEAF = 1
