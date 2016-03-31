@@ -1,4 +1,4 @@
-!**********************************************************************
+ï»¿!**********************************************************************
 ! INOUT.FOR
 ! This file contains all the subroutines for reading and writing to
 ! input and output files.
@@ -242,7 +242,7 @@ SUBROUTINE open_output_files(ISIMUS,CTITLE,TTITLE,PTITLE,&
     IF (ISMAESPA .AND. IOFORMAT .EQ. 0) THEN
         CALL open_file(trim(out_path)//'watbal.dat', UWATBAL, 'write', 'asc', 'replace')
         CALL open_file(trim(out_path)//'watlay.dat', UWATLAY, 'write', 'asc', 'replace')
-        CALL open_file(trim(out_path)//'swplay.dat', USWPLAY, 'write', 'asc', 'replace')    ! mathias décembre 2012
+        CALL open_file(trim(out_path)//'swplay.dat', USWPLAY, 'write', 'asc', 'replace')    ! mathias dï¿½cembre 2012
         CALL open_file(trim(out_path)//'watsoilt.dat', USOILT, 'write', 'asc', 'replace')
         !CALL open_file(trim(out_path)//'wattest.dat', UWATTEST, 'write', 'asc', 'replace')
         CALL open_file(trim(out_path)//'watupt.dat', UWATUPT, 'write', 'asc', 'replace')
@@ -920,7 +920,7 @@ SUBROUTINE CLOSEF()
         CLOSE(UWATBAL)     
         CLOSE(UWATDAY)     
         CLOSE(UWATLAY)     
-        CLOSE(USWPLAY) ! mathias décembre 2012     
+        CLOSE(USWPLAY) ! mathias dï¿½cembre 2012     
         CLOSE(USOILT)      
         CLOSE(UWATUPT)
     ELSE IF (IOWATBAL.EQ.1 .AND. IOFORMAT .EQ. 1) THEN
@@ -929,7 +929,7 @@ SUBROUTINE CLOSEF()
         CLOSE(UWATDAY) 
         CLOSE(UWATDAYHDR) 
         CLOSE(UWATLAY) 
-        CLOSE(USWPLAY) ! mathias décembre 2012     
+        CLOSE(USWPLAY) ! mathias dï¿½cembre 2012     
         CLOSE(UWATLAYHDR) 
         CLOSE(USOILT)  
         CLOSE(USOILTHDR)  
@@ -979,13 +979,13 @@ END SUBROUTINE INPUTCON
 
 
 !**********************************************************************
-SUBROUTINE INPUTWATBAL(BPAR, PSIE, KSAT, ROOTRESIST, ROOTRESFRAC,   &
+SUBROUTINE INPUTWATBAL(NOSPEC,BPAR, PSIE, KSAT, ROOTRESIST, ROOTRESFRAC,   &
                         ROOTRADTABLE, ROOTDENSTABLE,ROOTMASSTOTTABLE,                  &
                         MINROOTWP,MINLEAFWP,PLANTKTABLE, KSCALING, THROUGHFALL,    &
                         REASSIGNRAIN,RUTTERB,RUTTERD,MAXSTORAGE,    &
                         DRAINLIMIT,ROOTXSECAREA,EQUALUPTAKE,        &
                         NLAYER, NROOTLAYER, LAYTHICK, INITWATER,    &
-                        FRACROOTTABLE, POREFRAC, SOILTEMP, KEEPWET,      &
+                        FRACROOTTABLE, POREFRAC, SOILTEMP, KEEPWET, KEEPDRY,     &
                         DRYTHICKMIN,TORTPAR,SIMTSOIL,RETFUNCTION,   &
                         FRACORGANIC, EXPINF,WSOILMETHOD,USEMEASET,  &
                         USEMEASSW,SIMSOILEVAP,USESTAND,ALPHARET,WS,WR,  &
@@ -999,7 +999,7 @@ SUBROUTINE INPUTWATBAL(BPAR, PSIE, KSAT, ROOTRESIST, ROOTRESFRAC,   &
     INTEGER NLAYER,NROOTLAYER,REASSIGNRAIN, SIMTSOIL, EQUALUPTAKE
     INTEGER WSOILMETHOD,FRACROOTLEN,LASTENTRY,RETFUNCTION
     INTEGER USEMEASET,USEMEASSW,KEEPWET,I,SIMSOILEVAP
-    INTEGER USESTAND
+    INTEGER USESTAND,NOSPEC,KEEPDRY
     INTEGER NOKPDATES, DATESKP(maxdate), DATESROOT(maxdate), NOROOTDATES, NOROOTSPEC
     REAL MINLEAFWP(MAXSP),MINROOTWP
     REAL FRACROOTTABLE(MAXSOILLAY,maxdate,MAXSP),LAYTHICK(MAXSOILLAY)
@@ -1037,7 +1037,7 @@ SUBROUTINE INPUTWATBAL(BPAR, PSIE, KSAT, ROOTRESIST, ROOTRESFRAC,   &
     NRET=0.0
     
     ! Read all namelists in the "watpars.dat" file.
-    CALL READWATCONTROL(UWATPARS,KEEPWET,SIMTSOIL,REASSIGNRAIN,WSOILMETHOD,RETFUNCTION,EQUALUPTAKE, &
+    CALL READWATCONTROL(UWATPARS,KEEPWET,KEEPDRY,SIMTSOIL,REASSIGNRAIN,WSOILMETHOD,RETFUNCTION,EQUALUPTAKE, &
                         USEMEASET,USEMEASSW,SIMSOILEVAP,USESTAND)
     
     CALL READWATTFALL(UWATPARS, RUTTERB,RUTTERD,MAXSTORAGE,THROUGHFALL)
@@ -1050,7 +1050,7 @@ SUBROUTINE INPUTWATBAL(BPAR, PSIE, KSAT, ROOTRESIST, ROOTRESFRAC,   &
     CALL FILLWITHLAST(LAYTHICK, MAXSOILLAY, NLAYER, -900.0)    
     
     CALL READROOTPARS(UWATPARS,ROOTRESFRAC, ROOTRADTABLE,ROOTDENSTABLE,ROOTMASSTOTTABLE, NROOTLAYER,FRACROOTTABLE, &
-        LAYTHICK, ROOTBETA,DATESROOT,NOROOTDATES,NOROOTSPEC) 
+        LAYTHICK, ROOTBETA,DATESROOT,NOROOTDATES,NOROOTSPEC,NOSPEC) 
         
     CALL READPLANTPARS(UWATPARS,MINROOTWP,MINLEAFWP,PLANTKTABLE, KSCALING,DATESKP,NOKPDATES)
     
@@ -1116,11 +1116,11 @@ SUBROUTINE INPUTWATBAL(BPAR, PSIE, KSAT, ROOTRESIST, ROOTRESFRAC,   &
     ! For fracroot, make sure adds up to 1, or otherwise assume that
     ! provided values are weights (i.e. make them add to one).
 !    FRACSUM = SUM(FRACROOT(1:NROOTLAYER))
-!             ! modification mathias décembre 2012              ! maintenant calculé dans INTERPOLATEDIST
+!             ! modification mathias dï¿½cembre 2012              ! maintenant calculï¿½ dans INTERPOLATEDIST
 !    FRACROOT = FRACROOT / FRACSUM
     
     ! Root cross-sectional area (m2)
-!        ROOTXSECAREA = PI*ROOTRAD**2                                   ! maintenant calculé dans INTERPOLATEW !!!!!!!!!!!!
+!        ROOTXSECAREA = PI*ROOTRAD**2                                   ! maintenant calculï¿½ dans INTERPOLATEW !!!!!!!!!!!!
          ROOTXSECAREA = 0
          
     ! Prepare root mass and length arrays (from SPA, io.f90, RAD).
@@ -1328,12 +1328,12 @@ END SUBROUTINE READPLANTPARS
 !**********************************************************************
 SUBROUTINE READROOTPARS(UFILE, ROOTRESFRACI,ROOTRADTABLEI,ROOTDENSTABLEI, &  
                          ROOTMASSTOTTABLEI, NROOTLAYERI,FRACROOTI, &
-                         LAYTHICK,ROOTBETA,DATESROOTI,NOROOTDATES,NOROOTSPEC) 
+                         LAYTHICK,ROOTBETA,DATESROOTI,NOROOTDATES,NOROOTSPEC,NOSPEC) 
 !**********************************************************************
 
     USE maestcom
     IMPLICIT NONE
-    INTEGER UFILE,NROOTLAYER,NROOTLAYERI,IOERROR,NOROOTSPEC
+    INTEGER UFILE,NROOTLAYER,NROOTLAYERI,IOERROR,NOROOTSPEC,NOSPEC
     INTEGER IDATE, ILAY, INDEX, ISPEC
     INTEGER, EXTERNAL :: IDATE50
     CHARACTER*10 DATESROOT(maxdate)
@@ -1365,6 +1365,9 @@ SUBROUTINE READROOTPARS(UFILE, ROOTRESFRACI,ROOTRADTABLEI,ROOTDENSTABLEI, &
 
     ! If ROOTBETA is given, assign FRACROOT using Jackson's root distribution model.
     IF(ROOTBETA.GT.0.0)THEN
+       IF(NOROOTSPEC.GT.1)THEN
+          CALL SUBERROR('ROOTBETA CANNOT BE SPECIFIED BY SPECIES, FOR THE MOMENT.',IFATAL,0)
+       ENDIF
       CALL ASSIGNFRACROOT(ROOTBETA,FRACROOT,NROOTLAYER,LAYTHICK)
     ENDIF
 
@@ -1389,7 +1392,20 @@ SUBROUTINE READROOTPARS(UFILE, ROOTRESFRACI,ROOTRADTABLEI,ROOTDENSTABLEI, &
             END DO
         END DO
     END DO
+    
+    ! If more species than number of rooting profiles, assign first species to all others.
+    IF(NOSPEC.GE.2.AND.NOSPEC.GT.NOROOTSPEC)THEN
         
+        DO ISPEC = 2,NOSPEC
+            DO IDATE = 1,NOROOTDATES
+                DO ILAY = 1,NROOTLAYERI
+                    FRACROOTI(ILAY,IDATE,ISPEC) = FRACROOTI(ILAY,IDATE,1)
+                ENDDO
+            ENDDO
+        ENDDO
+        
+    ENDIF
+    
     RETURN
 END SUBROUTINE READROOTPARS
 
@@ -1487,21 +1503,21 @@ END SUBROUTINE READWATTFALL
 
 
 !**********************************************************************
-SUBROUTINE READWATCONTROL(UFILE,KEEPWETI,SIMTSOILI,REASSIGNRAINI, &
+SUBROUTINE READWATCONTROL(UFILE,KEEPWETI,KEEPDRYI,SIMTSOILI,REASSIGNRAINI, &
                           WSOILMETHODI,RETFUNCTIONI,EQUALUPTAKEI, &
                           USEMEASETI,USEMEASSWI,SIMSOILEVAPI,USESTANDI)
 !**********************************************************************
     USE maestcom
     IMPLICIT NONE
-    INTEGER UFILE,KEEPWET,SIMTSOIL,REASSIGNRAIN,WSOILMETHOD
+    INTEGER UFILE,KEEPWET,KEEPWETI,KEEPDRY,KEEPDRYI
     INTEGER RETFUNCTION,EQUALUPTAKE,USEMEASET
-    INTEGER KEEPWETI,SIMTSOILI,REASSIGNRAINI
-    INTEGER WSOILMETHODI,RETFUNCTIONI,EQUALUPTAKEI
+    INTEGER SIMTSOIL,SIMTSOILI,REASSIGNRAIN,REASSIGNRAINI
+    INTEGER WSOILMETHOD,WSOILMETHODI,RETFUNCTIONI,EQUALUPTAKEI
     INTEGER USEMEASETI,USEMEASSWI,USEMEASSW,IOERROR
     INTEGER SIMSOILEVAP,SIMSOILEVAPI
     INTEGER USESTAND,USESTANDI
     
-    NAMELIST /WATCONTROL/ KEEPWET,SIMTSOIL,REASSIGNRAIN,WSOILMETHOD, &
+    NAMELIST /WATCONTROL/ KEEPWET,KEEPDRY,SIMTSOIL,REASSIGNRAIN,WSOILMETHOD, &
                           RETFUNCTION,EQUALUPTAKE,USEMEASET,USEMEASSW, &
                           SIMSOILEVAP,USESTAND
     
@@ -1511,6 +1527,8 @@ SUBROUTINE READWATCONTROL(UFILE,KEEPWETI,SIMTSOILI,REASSIGNRAINI, &
     SIMSOILEVAP = 1 ! Do simulate soil evaporation.
     EQUALUPTAKE = 0 ! Do not set debugging option.
     USESTAND = 1    ! Do use information on non-target trees to scale up to the stand.
+    KEEPWET = 0     ! Do not keep soil at saturation
+    KEEPDRY = 0     ! Do not set precipitation to zero
  
     REWIND(UFILE)
     READ (UWATPARS, WATCONTROL, IOSTAT = IOERROR)
@@ -1520,6 +1538,7 @@ SUBROUTINE READWATCONTROL(UFILE,KEEPWETI,SIMTSOILI,REASSIGNRAINI, &
     END IF
 
     KEEPWETI=KEEPWET
+    KEEPDRYI=KEEPDRY
     SIMTSOILI=SIMTSOIL
     REASSIGNRAINI=REASSIGNRAIN
     WSOILMETHODI=WSOILMETHOD
@@ -2225,7 +2244,7 @@ SUBROUTINE OUTPUTWATBAL(IDAY,IHOUR,NROOTLAYER,NLAYER,          &
                               RGLOBUND,RGLOBABV,RGLOBABV12,RADINTERC,   &
                               ESOIL,TOTLAI, WTITLE,                     &
                               RADINTERC1,RADINTERC2,RADINTERC3,         &
-                              SCLOSTTOT,SOILWP,FRACAPAR) !rajout soilwp mathias décembre 2012
+                              SCLOSTTOT,SOILWP,FRACAPAR) !rajout soilwp mathias dï¿½cembre 2012
 ! Outputs water balance results.
 ! RAD, May 2008
 !**********************************************************************
@@ -2235,7 +2254,7 @@ SUBROUTINE OUTPUTWATBAL(IDAY,IHOUR,NROOTLAYER,NLAYER,          &
     INTEGER IDAY,IHOUR,NROOTLAYER,NLAYER
     INTEGER NSUMMED,USEMEASET,IHOWMANY
     REAL FRACWATER(MAXSOILLAY),FRACUPTAKE(MAXSOILLAY)
-    REAL SOILTEMP(MAXSOILLAY), SOILWP(MAXSOILLAY) ! modificatin mathias décembre 2012
+    REAL SOILTEMP(MAXSOILLAY), SOILWP(MAXSOILLAY) ! modificatin mathias dï¿½cembre 2012
     !REAL, INTENT(IN) :: THERMCOND(MAXSOILLAY)
     REAL THERMCOND(MAXSOILLAY)
     
@@ -2287,7 +2306,7 @@ SUBROUTINE OUTPUTWATBAL(IDAY,IHOUR,NROOTLAYER,NLAYER,          &
         WRITE (UWATLAY, 521) FRACWATER(1:NLAYER)
 
         ! write swp by layer
-        WRITE (USWPLAY, 521) SOILWP(1:NLAYER) ! mathias décembre 2012
+        WRITE (USWPLAY, 521) SOILWP(1:NLAYER) ! mathias dï¿½cembre 2012
 
         ! Write soil temperature by layer:
         WRITE (USOILT, 522) SOILTEMP(1:NLAYER)
@@ -2314,7 +2333,7 @@ SUBROUTINE OUTPUTWATBAL(IDAY,IHOUR,NROOTLAYER,NLAYER,          &
         WRITE (UWATLAY) FRACWATER(1:NLAYER)
 
         ! write swp by layer
-        WRITE (USWPLAY) SOILWP(1:NLAYER) ! mathias décembre 2012
+        WRITE (USWPLAY) SOILWP(1:NLAYER) ! mathias dï¿½cembre 2012
 
         ! Write soil temperature by layer:
         WRITE (USOILT) SOILTEMP(1:NLAYER)
@@ -2679,7 +2698,7 @@ SUBROUTINE READLIA(UFILE, NALPHAI, ALPHA, FALPHAI,DATESLIAOUT,NOLIADATES)
         IF (ELP.GT.0.00) THEN
             DALPHA = PID2/FLOAT(NALPHA)
             DO IALP = 1,NALPHA
-                ALPHA(IALP) = (IALP-0.5)*DALPHA     ! option multi date non entré pour cas elp >0
+                ALPHA(IALP) = (IALP-0.5)*DALPHA     ! option multi date non entrï¿½ pour cas elp >0
             END DO
             CALL ANGLE(ELP,NALPHA,FALPHA)
         END IF
@@ -2695,7 +2714,7 @@ SUBROUTINE READLIA(UFILE, NALPHAI, ALPHA, FALPHAI,DATESLIAOUT,NOLIADATES)
     IF (AVGANG.LT.0.0.AND.ELP.LT.0.0) THEN        
         DALPHA = PID2/FLOAT(NALPHAI)
         DO IALP = 1,NALPHAI
-            ALPHA(IALP) = (IALP-0.5)*DALPHA     ! modification mathias février 2013 oublie du calcul des alpha
+            ALPHA(IALP) = (IALP-0.5)*DALPHA     ! modification mathias fï¿½vrier 2013 oublie du calcul des alpha
         END DO
         INDEX = 1
         DO IDATE = 1,NODATESLIA
@@ -4730,14 +4749,14 @@ SUBROUTINE INTERPOLATET(IDAY, ISTART, IHOUR,                            &
                         END SUBROUTINE INTERPOLATET
 
 !****************************************************************
-SUBROUTINE INTERPOLATEW(IDAY,ISTART,NOKPDATES,DATESKP,PLANTKTABLE,PLANTK,   &
+SUBROUTINE INTERPOLATEW(IDAY,ISTART,NOSPEC,NOKPDATES,DATESKP,PLANTKTABLE,PLANTK,   &
                         NOROOTDATES,DATESROOT,NOROOTSPEC,ROOTRADTABLE,ROOTDENSTABLE,ROOTMASSTOTTABLE, &
                         FRACROOTSPEC,LAYTHICK,ROOTRESFRAC,ROOTXSECAREA, ROOTLEN, ROOTRESIST,   &
                         ROOTMASS, NROOTLAYER, ROOTRAD)
 
     USE maestcom
     IMPLICIT NONE
-    INTEGER DATESKP(maxdate),NOKPDATES,IDAY,ISTART,INDEX,IDATE,ISPEC
+    INTEGER DATESKP(maxdate),NOKPDATES,IDAY,ISTART,INDEX,IDATE,ISPEC,NOSPEC
     INTEGER NOROOTDATES,DATESROOT(maxdate), NROOTLAYER,I,NOROOTSPEC
     REAL PLANTKTABLE(maxdate),PLANTK
     REAL ROOTRAD,ROOTDENS,ROOTMASSTOT,ROOTRADTABLE(maxdate),ROOTDENSTABLE(maxdate),ROOTMASSTOTTABLE(maxdate)
@@ -4761,10 +4780,11 @@ SUBROUTINE INTERPOLATEW(IDAY,ISTART,NOKPDATES,DATESKP,PLANTKTABLE,PLANTK,   &
     
     ! Root cross-sectional area (m2)
     ROOTXSECAREA = PI*ROOTRAD**2
-         
+        
+
     ! Prepare root mass and length arrays (from SPA, io.f90, RAD).
     ROOTLEN = 0.
-    DO ISPEC=1, NOROOTSPEC
+    DO ISPEC=1, NOSPEC
         DO I=1, NROOTLAYER
             ! g m-3 
             ROOTMASS(I,ISPEC) = FRACROOTSPEC(I,ISPEC) * ROOTMASSTOT / LAYTHICK(I)      
@@ -4811,7 +4831,7 @@ SUBROUTINE INTERPOLATEDIST(IDAY,ISTART,FRACROOTTABLE,NOROOTDATES,NOROOTSPEC,DATE
         
             ! check if it sums to one
             FRACSUM = SUM(FRACROOTSPEC(1:MAXSOILLAY,I))
-                 ! modification mathias décembre 2012
+                 ! modification mathias dï¿½cembre 2012
             FRACROOTSPEC(1:MAXSOILLAY,I) = FRACROOTSPEC(1:MAXSOILLAY,I) / FRACSUM
         ENDDO
     ENDIF

@@ -4,3 +4,6 @@
 *.o
 *.Rproj
 .html
+MAESPA/
+compiled/
+

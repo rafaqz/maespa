@@ -10,7 +10,7 @@ iohist=0
 
 &species
 nspecies = 2
-speciesnames = 'eucalyptus' 'angophora'
+speciesnames = 'Deep roots' 'Shallow roots'
 phyfiles = 'phy1.dat' 'phy2.dat'
 strfiles = 'str1.dat' 'str2.dat'
 /
@@ -18,7 +18,7 @@ strfiles = 'str1.dat' 'str2.dat'
 dates for simulation start and end (must overlap with met file). 
 &dates
 startdate = '01/10/01'
-enddate = '01/01/02'
+enddate = '01/05/02'
 /
 	
 indicate which target tree(s) to use. 

@@ -1,7 +1,8 @@
-Example water balance parameters.
+Root distribution varies by species, zero precipitation
 
 &watcontrol
 keepwet = 0
+keepdry = 1
 simtsoil = 1
 simsoilevap = 1
 reassignrain = 0
@@ -32,7 +33,7 @@ rootmasstot = 1000
 nrootlayer = 10
 norootspec = 2
 fracroot = 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 
-0.3 0.2 0.1 0.1 0.1 0.1 0.1 0.0 0.0 0.0
+0.4 0.2 0.15 0.15 0.1 0.0 0.0 0.0 0.0 0.0
 /
 
 
