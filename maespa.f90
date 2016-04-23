@@ -206,8 +206,8 @@ PROGRAM maespa
                         NZEN,DIFZEN,RANDOMSPEC(I),DEXTSPEC(I,1:MAXANG))
         END DO
         
-        ! to account for the looping order change.
-        CALL RESTARTMETF(IDAY+ISTART,MSTART,MFLAG)
+        ! Removed - not necessary
+        !CALL RESTARTMETF(IDAY+ISTART,MSTART,MFLAG)
        
         ! Prepare histogram
         CALL ZEROSTART(HISTO,CANOPYDIMS)
