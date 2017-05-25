@@ -3271,7 +3271,7 @@ SUBROUTINE READGS(UFILE,I,MODELGS,                                              
     ENDIF
 
     IF (MODELGS.EQ.1) THEN
-        CALL SUBERROR('JARVIS STOMATAL CONDUCTANCE MODEL IS NOT SUPPORTED IN MAESPA (BUT IT IS IN MAESTRA).', &
+        CALL SUBERROR('JARVIS STOMATAL CONDUCTANCE MODEL IS NOT SUPPORTED IN MAESPA (sorry).', &
             IFATAL,IOERROR)
     ENDIF
     
@@ -3281,7 +3281,7 @@ SUBROUTINE READGS(UFILE,I,MODELGS,                                              
             DATESGSI(IDATE) = IDATE50(DATES(IDATE))
         END DO
         DO IDATE = 1,NODATESWLEAF
-            DATESWLEAFI(IDATE)=IDATE50(DATESWLEAF(IDATE))
+            DATESWLEAFI(IDATE) = IDATE50(DATESWLEAF(IDATE))
         END DO
 
         ! If conductance pars given for water:
@@ -3355,6 +3355,8 @@ SUBROUTINE READGS(UFILE,I,MODELGS,                                              
         G1TABLEI = G1
         GAMMAI = GAMMA
         GKI = GK
+        WC1I = WC1
+        WC2I = WC2
         VPDMINI = VPDMIN*1000
         NOGSDATES = NODATESGS
         NOWLEAFDATES = NODATESWLEAF

@@ -332,7 +332,7 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
 
     ! Calculate soil moisture modifying factor
     ! MAESPA uses Emax approach, or Tuzet. MAESTRA calculates it various ways based on input data.
-    IF(.NOT.ISMAESPA.AND.WSOILMETHOD.NE.0)THEN
+    IF( (.NOT.ISMAESPA.AND.WSOILMETHOD.NE.0).OR.(WSOILMETHOD.EQ.2))THEN
         FSOIL = CALCFSOIL(WSOILMETHOD,SOILMOISTURE,SOILDATA,SMD1,SMD2,WC1,WC2,SWPEXP)
     ELSE
         FSOIL = 1.0
@@ -358,7 +358,7 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
             ! Full version
             ! NOTE: 1.6 (from corrigendum to Medlyn et al 2011) is missing here,
             ! because we are calculating conductance to CO2!
-            GSDIVA = (1.0 + G1 / VPDG**(1-GK)) / CS
+            GSDIVA = FSOIL * (1.0 + G1 / VPDG**(1-GK)) / CS
             
         ELSE IF (MODELGS.EQ.6) THEN
             IF(VPD.LT.VPDMIN)THEN
