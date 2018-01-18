@@ -1344,7 +1344,7 @@ PROGRAM maespa
                                   CANOPY_STORE,EVAPSTORE,DRAINSTORE,                              &
                                   SURFACE_WATERMM,ETMM,ETMM2,USEMEASET,ETMEAS(IHOUR),DISCHARGE,   &
                                   FRACWATER,WEIGHTEDSWP,KTOT,                                     &
-                                  DRYTHICK,SOILEVAP,OVERFLOW,THERMCOND,FRACUPTAKE,SOILMOISTURE,   &
+                                  DRYTHICK,SOILEVAP,OVERFLOW,THERMCOND,FRACUPTAKESPEC(1:MAXSOILLAY,1),SOILMOISTURE,   &
                                   FSOIL1,NSUMMED,TOTTMP,SOILTEMP-FREEZE,                          &
                                   TAIR(IHOUR),QH,QE,QN,QC,RGLOBUND,RGLOBABV,RGLOBABV12,RADINTERC, &
                                   ESOIL, TOTLAI, WTITLE,                                          &

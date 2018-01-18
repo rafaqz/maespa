@@ -2244,7 +2244,7 @@ SUBROUTINE OUTPUTWATBAL(IDAY,IHOUR,NROOTLAYER,NLAYER,          &
                               RGLOBUND,RGLOBABV,RGLOBABV12,RADINTERC,   &
                               ESOIL,TOTLAI, WTITLE,                     &
                               RADINTERC1,RADINTERC2,RADINTERC3,         &
-                              SCLOSTTOT,SOILWP,FRACAPAR) !rajout soilwp mathias d�cembre 2012
+                              SCLOSTTOT,SOILWP,FRACAPAR)
 ! Outputs water balance results.
 ! RAD, May 2008
 !**********************************************************************
@@ -2254,7 +2254,7 @@ SUBROUTINE OUTPUTWATBAL(IDAY,IHOUR,NROOTLAYER,NLAYER,          &
     INTEGER IDAY,IHOUR,NROOTLAYER,NLAYER
     INTEGER NSUMMED,USEMEASET,IHOWMANY
     REAL FRACWATER(MAXSOILLAY),FRACUPTAKE(MAXSOILLAY)
-    REAL SOILTEMP(MAXSOILLAY), SOILWP(MAXSOILLAY) ! modificatin mathias d�cembre 2012
+    REAL SOILTEMP(MAXSOILLAY), SOILWP(MAXSOILLAY)
     !REAL, INTENT(IN) :: THERMCOND(MAXSOILLAY)
     REAL THERMCOND(MAXSOILLAY)
     
