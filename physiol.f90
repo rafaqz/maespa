@@ -31,6 +31,7 @@
 !   PENMON - implements the Penman-Monteith equation
 !**********************************************************************
 
+include "utils.f90"
 
 !**********************************************************************
 SUBROUTINE PSTRANSPIF(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH,VPD,VMFD,PRESS,JMAX25,&
@@ -41,11 +42,11 @@ SUBROUTINE PSTRANSPIF(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,
                     TLEAF,GBH,PLANTK,TOTSOILRES,MINLEAFWP,WEIGHTEDSWP,KTOT,HMSHAPE,PSIL,ETEST,CI, &
                     ISMAESPA)
 !
-! 'Interface' to PSTRANSP (new subroutine, Feb. 2011). 
-! Calculates (numericall) the leaf water potential for the Tuzet model; 
+! 'Interface' to PSTRANSP (new subroutine, Feb. 2011).
+! Calculates (numericall) the leaf water potential for the Tuzet model;
 ! otherwise (at the moment), proceeds to call PSTRANSP.
 !**********************************************************************
-      
+
     USE maestcom
     IMPLICIT NONE
 
@@ -70,23 +71,23 @@ SUBROUTINE PSTRANSPIF(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,
     ! Find leaf water potential that matches Tuzet model (tuzet gs = f(psi), and psi = f(gs)).
     ! The result is PSILIN, which is then used below to (re-)estimate all gas exchange variables.
     IF(MODELGS.EQ.6)THEN
-    
+
         CALL PSILFIND(RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH,VPD,VMFD,PRESS,JMAX25,&
                     IECO,EAVJ,EDVJ,DELSJ,VCMAX25,EAVC,EDVC,DELSC,TVJUP,TVJDN,THETA,AJQ,RD0, &
                     Q10F,K10F,RTEMP,DAYRESP,TBELOW,MODELGS,WSOILMETHOD,EMAXLEAF,SOILMOISTURE,    &
                     SMD1,SMD2,WC1,WC2,SOILDATA,SWPEXP,FSOIL,G0,D0L,GAMMA,VPDMIN,G1,GK,WLEAF,NSIDES,   &
                     VPARA,VPARB,VPARC,VFUN,SF,PSIV,ITERMAX,GSC,ALEAF,RD,ET,FHEAT,TLEAF,GBH,PLANTK,TOTSOILRES,MINLEAFWP,  &
                     WEIGHTEDSWP,HMSHAPE,PSILIN,ETEST, IDAY, IHOUR)  ! modification mathias mars iday ihour
-    
+
     ENDIF
-    
+
     CALL PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH,VPD,VMFD,PRESS,JMAX25,&
                     IECO,EAVJ,EDVJ,DELSJ,VCMAX25,EAVC,EDVC,DELSC,TVJUP,TVJDN,THETA,AJQ,RD0, &
                     Q10F,K10F,RTEMP,DAYRESP,TBELOW,MODELGS,WSOILMETHOD,EMAXLEAF,SOILMOISTURE,    &
                     SMD1,SMD2,WC1,WC2,SOILDATA,SWPEXP,FSOIL,G0,D0L,GAMMA,VPDMIN,G1,GK,WLEAF,NSIDES,   &
                     VPARA,VPARB,VPARC,VFUN,SF,PSIV,ITERMAX,GSC,ALEAF,RD,ET,FHEAT,TLEAF,GBH,PLANTK,TOTSOILRES,MINLEAFWP,   &
                     WEIGHTEDSWP,KTOT,HMSHAPE,PSILIN,PSIL,ETEST,CI,ISMAESPA)
-    
+
 
 END SUBROUTINE PSTRANSPIF
 
@@ -105,7 +106,7 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
 ! to calculate leaf temp, Cs & Ca.
 ! Setting ITERMAX = 0 gives (1); ITERMAX > 0 (suggest 100) gives (2).
 !**********************************************************************
-      
+
     USE maestcom
     IMPLICIT NONE
 
@@ -127,7 +128,7 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
     logical failconv
     LOGICAL ISMAESPA
     CHARACTER*70 errormessage
-    
+
     REAL, EXTERNAL :: SATUR
     REAL, EXTERNAL :: GRADIATION
     REAL, EXTERNAL :: GBHFORCED
@@ -135,12 +136,12 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
     REAL, EXTERNAL :: PENMON
 
     failconv = .FALSE.
-    
+
     ! Hydraulic conductance of the entire soil-to-leaf pathway
     IF(ISMAESPA)THEN
         KTOT = 1./(TOTSOILRES + 1./PLANTK)
     ENDIF
-    
+
     !write(uwattest, *)ktot,plantk
 
     ! Set initial values of leaf temp and surface CO2 & VPD
@@ -168,9 +169,9 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
                     EAVC,EDVC,DELSC,TVJUP,TVJDN,THETA,AJQ,RD0,Q10F,K10F,RTEMP,DAYRESP,TBELOW,&
                     MODELGS,GSREF,GSMIN,I0,D0,VK1,VK2,VPD1,VPD2,VMFD0,GSJA,GSJB,T0,TREF,TMAX,&
                     WSOILMETHOD,SOILMOISTURE,EMAXLEAF,SMD1,SMD2,WC1,WC2,SOILDATA,SWPEXP,FSOIL,&
-                    G0,D0L,GAMMA,VPDMIN,G1,GK,GSC,ALEAF,RD,MINLEAFWP,KTOT,WEIGHTEDSWP, & 
+                    G0,D0L,GAMMA,VPDMIN,G1,GK,GSC,ALEAF,RD,MINLEAFWP,KTOT,WEIGHTEDSWP, &
                     VPARA,VPARB,VPARC,VFUN,SF,PSIV,HMSHAPE,PSILIN,PSIL,CI,ISMAESPA)
-     
+
     ! Boundary layer conductance for heat - single sided, free convection
     GBHF = GBHFREE(TAIR,TLEAF,PRESS,WLEAF)
     ! Total boundary layer conductance for heat
@@ -196,7 +197,7 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
     CS = CA - ALEAF/GBC
     TDIFF = (RNET - ET*LHV) / (CPAIR * AIRMA * GH)
     TLEAF1 = TAIR + TDIFF/4
-    
+
     ! on recalcule ET modification mathias avril 2013
     ! Boundary layer conductance for heat - single sided, free convection
     GBHF = GBHFREE(TAIR,TLEAF,PRESS,WLEAF)
@@ -237,21 +238,21 @@ SUBROUTINE PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH
     GOTO 100
 
     200   FHEAT = RNET - LHV*ET
-          
+
     !      FHEAT = (TLEAF - TAIR)*2.*GBH*CPAIR*AIRMA  !BM 12/05 Not correct - use energy bal instead
     ET = ET*1E6  ! Return ET,EI in umol m-2 s-1
 
     IF(ISMAESPA)THEN
         ! Simple transpiration rate assuming perfect coupling (for comparison).
         ETEST = 1E6 * (VPD/PRESS) * GSV
-    
+
         ! Return re-calculated leaf water potential (using ET without boundary layer conductance).
         ! We use ETEST otherwise PSIL < PSILMIN quite frequently when soil is dry. This is difficult to interpret,
-        ! especially because PHOTOSYN does not account for boundary layer conductance.    
+        ! especially because PHOTOSYN does not account for boundary layer conductance.
         !IF(MODELGS.EQ.6)THEN
         PSIL = WEIGHTEDSWP - (ETEST/1000)/KTOT
     ENDIF
-    
+
     RETURN
 END SUBROUTINE PSTRANSP
 
@@ -307,24 +308,24 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
     JMAX = JMAXTFN(JMAX25,TLEAF,EAVJ,EDVJ,DELSJ,TVJUP,TVJDN)      ! Po
     VCMAX = VCMAXTFN(VCMAX25,TLEAF,EAVC,EDVC,DELSC,TVJUP,TVJDN)   ! Ma
     RD = RESP(RD0,RD0ACC,TLEAF,TMOVE,Q10F,K10F,RTEMP,DAYRESP,TBELOW)
-    
+
     ! Effect of soil water stress on Vcmax and Jmax.
     IF(ISMAESPA)THEN
         VJMOD = VJMAXWFN(WEIGHTEDSWP, VPARA, VPARB, VPARC, VFUN)
         VCMAX = VCMAX * VJMOD
         JMAX = JMAX * VJMOD
     ENDIF
-    
+
     ! Actual electron transport rate
     J = QUADM(THETA,-(AJQ*PAR+JMAX),AJQ*PAR*JMAX,IQERROR)
-    
+
     ! RuBP regeneration rate
     VJ = J/4.0
 
     ! Deal with extreme cases
     IF ((JMAX.LE.0.0).OR.(VCMAX.LE.0.0)) THEN
         ALEAF = -RD
-        
+
         GS = G0
 
         RETURN
@@ -337,8 +338,8 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
     ELSE
         FSOIL = 1.0
     ENDIF
-    
-        
+
+
         ! Note that MODELGS=5 is not implemented (but it is in Maestra).
         IF (MODELGS.EQ.2) THEN
             ! Ball-Berry model
@@ -354,12 +355,12 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
             ENDIF
             ! Old, linearized version of BBOpti model
             !GSDIVA = G1 / (CS - GAMMA) / VPDG**(1-GK)
-            
+
             ! Full version
             ! NOTE: 1.6 (from corrigendum to Medlyn et al 2011) is missing here,
             ! because we are calculating conductance to CO2!
             GSDIVA = FSOIL * (1.0 + G1 / VPDG**(1-GK)) / CS
-            
+
         ELSE IF (MODELGS.EQ.6) THEN
             IF(VPD.LT.VPDMIN)THEN
                 VPDG = VPDMIN/1000.0
@@ -383,7 +384,7 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
         ELSE
             AC = VCMAX * (CIC - GAMMASTAR) / (CIC + KM)
         END IF
- 
+
         ! Solution when electron transport rate is limiting
         A = G0 + GSDIVA * (VJ - RD)
         B = (1. - CS*GSDIVA) * (VJ - RD) + G0 * (2.*GAMMASTAR - CS) &
@@ -400,7 +401,7 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
 
         ALEAF = AMIN1(AC,AJ) - RD  ! Solution for Ball-Berry model
         GS = G0 + GSDIVA*ALEAF
-        
+
         ! Set nearly zero conductance (for numerical reasons).
         GSMIN = 1E-09
         IF (GS.LT.GSMIN) GS = GSMIN
@@ -419,7 +420,7 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
 
                 ! Leaf water potential
                 PSIL = WEIGHTEDSWP - ETEST/KTOT
-    
+
                 IF(ETEST > EMAXLEAF)THEN
 
                     ! Just for output:
@@ -437,7 +438,7 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
                     !IF(GS.LT.G0.AND.G0.GT.0)THEN
                     !     GS = G0
                     !ENDIF
-                
+
                     ! A very low minimum; for numerical stability.
                     IF(GS.LT.1E-09)THEN
                         GS = 1E-09
@@ -452,9 +453,9 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
                     A = 1./GS
                     B = (0.0 - VCMAX)/GS - CS - KM
                     C = VCMAX * (CS - GAMMASTAR)
-                    
+
                     AC = QUADM(A,B,C,IQERROR1)
-      
+
                     ! Photosynthesis when electron transport is limiting
                     A = 1./GS
                     B = (RD - VJ)/GS - CS - 2*GAMMASTAR
@@ -462,19 +463,19 @@ SUBROUTINE PHOTOSYN(PAR,TLEAF,TMOVE,CS,RH,VPD,VMFD, &
                     AJ = QUADM(A,B,C,IQERROR)
 
                     ALEAF = AMIN1(AC,AJ)       ! Emax model solution.
-                    
+
                 ENDIF ! if (E>EMAX)
             ENDIF
         ENDIF
-    
+
     ! Return CI.
     IF(GS.GT.0.AND.ALEAF.GT.0)THEN
         CI = CS - ALEAF/GS
     ELSE
         CI = CS
     ENDIF
-    
-    
+
+
     RETURN
 END SUBROUTINE PHOTOSYN
 
@@ -490,7 +491,7 @@ REAL FUNCTION GAMMAFN(TLEAF, IECO)
     INTEGER IECO
     REAL TLEAF
     REAL, EXTERNAL :: ARRH
-    
+
     IF (IECO.EQ.1) THEN
         ! Ecocraft fomulation; based on Brooks & Farquhar and von Caemmerer et al.
         ! If TLEAF < -1.0 then calculate Gamma for T = -1 (quadratic not applicable)
@@ -498,7 +499,7 @@ REAL FUNCTION GAMMAFN(TLEAF, IECO)
             GAMMAFN = 36.9 + 1.88*(-26.0) + 0.036*(-26.0)*(-26.0)
         ELSE
             GAMMAFN = 36.9 + 1.88*(TLEAF-25) + 0.036*(TLEAF-25)*(TLEAF-25)
-            
+
         END IF
     ELSE      ! Bernacchi et al 2001 PCE 24: 253-260
             GAMMAFN = ARRH(42.75,37830.0,TLEAF,25.0)
@@ -518,7 +519,7 @@ REAL FUNCTION KMFN(TLEAF,IECO)
     INTEGER IECO
     REAL OI,KC25,KO25,KCEA,KOEA,KC,KO, TLEAF
     REAL, EXTERNAL :: ARRH
-    
+
     OI = 205000         ! Oxygen partial pressure (umol mol-1)
     IF (IECO.EQ.1) THEN
     ! Physiological constants - values agreed by Ecocraft - Badger & Collatz values
@@ -533,11 +534,11 @@ REAL FUNCTION KMFN(TLEAF,IECO)
         KOEA = 36380        ! Temp. response of Ko (J mol-1)
     END IF
 
-    
+
       ! Km <- exp(38.05-79430/(8.314*(Tleaf+273)))*(1+210/exp(20.3-36380/(8.314*(Tleaf+273))))
       ! ARRH = KT*EXP(EA*(T-TREF)/(RCONST*(T-ABSZERO)*(TREF-ABSZERO)))
       ! ARRH(KT,EA,T,TREF)
-    
+
     ! This function is well-behaved for TLEAF < 0.0
     KC = ARRH(KC25,KCEA,TLEAF,25.0)
     KO = ARRH(KO25,KOEA,TLEAF,25.0)
@@ -558,7 +559,7 @@ REAL FUNCTION JMAXTFN(JMAX25,TLEAF,EAVJ,EDVJ,DELSJ,TVJUP,TVJDN)
     IMPLICIT NONE
     REAL JMAX25,TLEAF,EAVJ,EDVJ,DELSJ, TVJUP, TVJDN
     REAL, EXTERNAL :: TK
-    
+
     ! This function is well-behaved for TLEAF < 0.0
     JMAXTFN = JMAX25 * EXP((TLEAF-25)*EAVJ/(RCONST*TK(TLEAF)*TK(25.)))  &
                     * (1.+EXP((DELSJ*TK(25.)-EDVJ)/(RCONST*TK(25.))))   &
@@ -590,7 +591,7 @@ IF(VFUN.EQ.0)THEN
     VJMAXWFN = 1
 ENDIF
 
-! Simple linear dependance. 
+! Simple linear dependance.
 ! VPARA is SWP where Vcmax is zero, VPARB is SWP where Vcmax is one.
 IF(VFUN.EQ.1)THEN
 
@@ -598,16 +599,16 @@ IF(VFUN.EQ.1)THEN
         VJMAXWFN = 0
     ELSEIF(SWP.GT.VPARB) THEN
         VJMAXWFN = 1
-    ELSE 
+    ELSE
         VJMAXWFN =  (SWP - VPARA) / (VPARB - VPARA)
     ENDIF
 ENDIF
 
 ! As in Zhou, et al. Agricultural and Forest Meteorology. 2013.
 IF(VFUN.EQ.2)THEN
-    
+
     VJMAXWFN = (1 + EXP(VPARA*VPARB) )/ (1 + EXP(VPARA*(VPARB-SWP)))
-    
+
 ENDIF
 
 
@@ -662,7 +663,7 @@ REAL FUNCTION RESP(RD0,RD0ACC,TLEAF,TMOVE,Q10F,K10F,RTEMP,DAYRESP,TBELOW)
 ! using a Q10 (exponential) formulation.
 !**********************************************************************
 
-    IMPLICIT NONE      
+    IMPLICIT NONE
     REAL RD0,TLEAF,Q10F,RTEMP,DAYRESP,K10F,RD0ACC,TMOVE,TBELOW
 
     IF (TLEAF.GE.TBELOW) THEN
@@ -685,7 +686,7 @@ REAL FUNCTION ARRH(KT,EA,T,TREF)
     USE maestcom
     IMPLICIT NONE
     REAL KT, EA, T, TREF
-    
+
     ARRH = KT*EXP(EA*(T-TREF)/(RCONST*(T-ABSZERO)*(TREF-ABSZERO)))
     RETURN
 END FUNCTION ARRH
@@ -708,7 +709,7 @@ REAL FUNCTION ETCAN(WIND,ZHT,Z0HT,ZPD,PRESS,TAIR,RNET,VPD,GSCAN,STOCKING)
 
     ! Get boundary layer conductance
     GB = GBCAN(WIND,ZHT,Z0HT,ZPD,PRESS,TAIR)
-    
+
     ! Convert mol CO2/tree/s to mol H2O/m2/s
     GSV = GSCAN*GSVGSC*STOCKING
     RNETM2 = RNET*STOCKING
@@ -719,7 +720,7 @@ REAL FUNCTION ETCAN(WIND,ZHT,Z0HT,ZPD,PRESS,TAIR,RNET,VPD,GSCAN,STOCKING)
 
         ! Const s in Penman-Monteith equation  (Pa K-1)
         SLOPE = (SATUR(TAIR + 0.1) - SATUR(TAIR)) / 0.1
-        
+
         ! Call Penman-Monteith
         GH = GB
         GV = 1./(1./GSV + 1./GB)
@@ -750,7 +751,7 @@ REAL FUNCTION PENMON(PRESS,SLOPE,LHV,RNET,VPD,GH,GV)
     IMPLICIT NONE
     REAL PRESS,SLOPE,LHV,RNET,VPD,GH,GV,GAMMA
     REAL ET
-    
+
     GAMMA = CPAIR*AIRMA*PRESS/LHV
 
     IF (GV.GT.0.0) THEN
@@ -838,12 +839,12 @@ REAL FUNCTION GBCAN(WIND,ZHT,Z0HT,ZPD,PRESS,TAIR)
     IMPLICIT NONE
     REAL WIND,ZHT,Z0HT,ZPD,PRESS,TAIR,CMOLAR
     REAL, EXTERNAL :: TK
-    
+
     IF (Z0HT.GT.0.0) THEN
 
         ! Formula from Jones 1992 p 68
         GBCAN = WIND*(VONKARMAN**2)/(LOG((ZHT - ZPD)/Z0HT))**2
-        
+
         ! Convert from m s-1 to mol m-2 s-1
         CMOLAR = PRESS / (RCONST * TK(TAIR))
         GBCAN = GBCAN * CMOLAR
@@ -863,7 +864,7 @@ REAL FUNCTION GBCANMS(WIND,ZHT,Z0HT,ZPD)
     USE maestcom
     IMPLICIT NONE
     REAL WIND,ZHT,Z0HT,ZPD
-    
+
     IF (Z0HT.GT.0.0) THEN
         ! Formula from Jones 1992 p 68
         GBCANMS = WIND*(VONKARMAN**2)/(LOG((ZHT - ZPD)/Z0HT))**2
@@ -883,7 +884,7 @@ SUBROUTINE CALCWBIOM(IDAY,HT,DIAM,COEFFT,EXPONT,WINTERC,WBIOM,WBINC)
     IMPLICIT NONE
     INTEGER IDAY
     REAL PREVWBIOM,HT,DIAM,COEFFT,EXPONT,WINTERC,WBIOM,WBINC
-    
+
     PREVWBIOM = WBIOM
     WBIOM = COEFFT*HT*(DIAM**EXPONT) + WINTERC
     IF (IDAY.EQ.0) PREVWBIOM = WBIOM
@@ -913,7 +914,7 @@ SUBROUTINE CALCFBIOM(IDAY,NOSLADATES,FOLLAY,SLA,PROP,NOLAY,NOAGEP, &
             DO J = 1,NOAGEP
                 FBIOM = FBIOM + FOLLAY(I)*PROP(J)/SLA(I,J)
             END DO
-        END DO    
+        END DO
         IF (IDAY.EQ.0) PREVFBIOM = FBIOM
         FBINC = (FBIOM - PREVFBIOM)*1E3
     ELSE
@@ -1001,9 +1002,9 @@ REAL FUNCTION CALCFSOIL(WSOILMETHOD,SOILMOISTURE,SOILDATA,SMD1,SMD2,WC1,WC2,SWPE
             IF(WC1 .GT. WC2)THEN
                 CALL SUBERROR('Error: WC1 needs to be smaller than WC2.',IFATAL,IOERROR)
             END IF
-            CALCFSOIL = -WC1/(WC2-WC1) + SOILMOISTURE/(WC2-WC1)       
-            IF(CALCFSOIL.GT.1.)CALCFSOIL = 1.                         
-            IF(CALCFSOIL.LT.0.)CALCFSOIL = 0.                         
+            CALCFSOIL = -WC1/(WC2-WC1) + SOILMOISTURE/(WC2-WC1)
+            IF(CALCFSOIL.GT.1.)CALCFSOIL = 1.
+            IF(CALCFSOIL.LT.0.)CALCFSOIL = 0.
             SETFSOIL = 1
         END IF
     END IF
@@ -1063,7 +1064,7 @@ SUBROUTINE PSILFIND(RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH,VPD,VMFD,P
                     SMD1,SMD2,WC1,WC2,SOILDATA,SWPEXP,FSOIL,G0,D0L,GAMMA,VPDMIN,G1,GK,WLEAF,NSIDES,   &
                     VPARA,VPARB,VPARC,VFUN,SF,PSIV,ITERMAX,GSC,ALEAF,RD,ET,FHEAT,TLEAF,GBH,PLANTK,TOTSOILRES,MINLEAFWP,  &
                     WEIGHTEDSWP,HMSHAPE,PSILIN,ETEST,iday,ihour)
-                    
+
 !**********************************************************************
         USE maestcom
         IMPLICIT NONE
@@ -1087,12 +1088,12 @@ SUBROUTINE PSILFIND(RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH,VPD,VMFD,P
         INTEGER EXTRAINT(10)
         REAL, EXTERNAL :: ZBRENT
         REAL, EXTERNAL :: PSILOBJFUN
-        
-        
+
+
         ! INIT
         PSILIN = -0.1
         PSIL = -0.1
-          
+
         EXTRAINT(1) = IECO
         EXTRAINT(2) = MODELGS
         EXTRAINT(3) = WSOILMETHOD
@@ -1100,7 +1101,7 @@ SUBROUTINE PSILFIND(RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH,VPD,VMFD,P
         EXTRAINT(5) = ITERMAX
         EXTRAINT(6) = VFUN
         EXTRAINT(7) = IDAY  !modification
-        EXTRAINT(8) = IHOUR !modification        
+        EXTRAINT(8) = IHOUR !modification
 
         EXTRAPARS(1) = RDFIPT
         EXTRAPARS(2) = TUIPT
@@ -1113,12 +1114,12 @@ SUBROUTINE PSILFIND(RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH,VPD,VMFD,P
         EXTRAPARS(9) = CA
         EXTRAPARS(10) = RH
         EXTRAPARS(11) = VPD
-        EXTRAPARS(12) = VMFD        
+        EXTRAPARS(12) = VMFD
         EXTRAPARS(13) = PRESS
         EXTRAPARS(14) = JMAX25
         EXTRAPARS(15) = EAVJ
         EXTRAPARS(16) = EDVJ
-        EXTRAPARS(17) = DELSJ       
+        EXTRAPARS(17) = DELSJ
         EXTRAPARS(18) = VCMAX25
         EXTRAPARS(19) = EAVC
         EXTRAPARS(20) = EDVC
@@ -1136,35 +1137,35 @@ SUBROUTINE PSILFIND(RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH,VPD,VMFD,P
         EXTRAPARS(32) = TOTSOILRES
         EXTRAPARS(33) = SOILMOISTURE
         EXTRAPARS(34) = SMD1
-        EXTRAPARS(35) = SMD2       
-        EXTRAPARS(36) = WC1        
-        EXTRAPARS(37) = WC2        
-        EXTRAPARS(38) = SOILDATA        
-        EXTRAPARS(39) = SWPEXP        
-        EXTRAPARS(40) = FSOIL        
-        EXTRAPARS(41) = G0        
-        EXTRAPARS(42) = D0L        
-        EXTRAPARS(43) = GAMMA        
-        EXTRAPARS(44) = G1        
-        EXTRAPARS(45) = WLEAF        
-        EXTRAPARS(46) = SF        
-        EXTRAPARS(47) = PSIV        
-        EXTRAPARS(48) = PLANTK        
-        EXTRAPARS(49) = WEIGHTEDSWP        
-        EXTRAPARS(50) = HMSHAPE        
+        EXTRAPARS(35) = SMD2
+        EXTRAPARS(36) = WC1
+        EXTRAPARS(37) = WC2
+        EXTRAPARS(38) = SOILDATA
+        EXTRAPARS(39) = SWPEXP
+        EXTRAPARS(40) = FSOIL
+        EXTRAPARS(41) = G0
+        EXTRAPARS(42) = D0L
+        EXTRAPARS(43) = GAMMA
+        EXTRAPARS(44) = G1
+        EXTRAPARS(45) = WLEAF
+        EXTRAPARS(46) = SF
+        EXTRAPARS(47) = PSIV
+        EXTRAPARS(48) = PLANTK
+        EXTRAPARS(49) = WEIGHTEDSWP
+        EXTRAPARS(50) = HMSHAPE
         EXTRAPARS(51) = VPARA
         EXTRAPARS(52) = VPARB
         EXTRAPARS(53) = VPARC
         EXTRAPARS(54) = VPDMIN
         EXTRAPARS(55) = GK
-        
+
         ! Set bounds for root-finding
         T1 = -100.0
         T2 = 0.0
 
         ! Error tolerance.
         XACC = 1E-03
-        
+
         PSILIN = ZBRENT(PSILOBJFUN,T1,T2,XACC,EXTRAPARS,EXTRAINT)
 
 
@@ -1211,7 +1212,7 @@ REAL FUNCTION PSILOBJFUN(PSILIN, EXTRAPARS, EXTRAINT)
           VFUN = EXTRAINT(6)
           IDAY = EXTRAINT(7)
           IHOUR = EXTRAINT(8)
-          
+
           RDFIPT =EXTRAPARS(1)
           TUIPT =EXTRAPARS(2)
           TDIPT =EXTRAPARS(3)
@@ -1228,9 +1229,9 @@ REAL FUNCTION PSILOBJFUN(PSILIN, EXTRAPARS, EXTRAINT)
           JMAX25 =EXTRAPARS(14)
           EAVJ =EXTRAPARS(15)
           EDVJ =EXTRAPARS(16)
-          DELSJ =     EXTRAPARS(17) 
+          DELSJ =     EXTRAPARS(17)
           VCMAX25 =EXTRAPARS(18)
-          EAVC =EXTRAPARS(19) 
+          EAVC =EXTRAPARS(19)
           EDVC =EXTRAPARS(20)
           DELSC =EXTRAPARS(21)
           TVJUP =EXTRAPARS(22)
@@ -1246,41 +1247,41 @@ REAL FUNCTION PSILOBJFUN(PSILIN, EXTRAPARS, EXTRAINT)
           TOTSOILRES =EXTRAPARS(32)
           SOILMOISTURE =EXTRAPARS(33)
           SMD1 =EXTRAPARS(34)
-          SMD2 =   EXTRAPARS(35)   
-          WC1 = EXTRAPARS(36)       
-          WC2 =EXTRAPARS(37)       
+          SMD2 =   EXTRAPARS(35)
+          WC1 = EXTRAPARS(36)
+          WC2 =EXTRAPARS(37)
           SOILDATA =EXTRAPARS(38)
-          SWPEXP = EXTRAPARS(39) 
-          FSOIL =EXTRAPARS(40)     
-          G0 = EXTRAPARS(41)  
-          D0L = EXTRAPARS(42)      
-          GAMMA = EXTRAPARS(43)       
-          G1 = EXTRAPARS(44)   
-          WLEAF =  EXTRAPARS(45)      
-          SF = EXTRAPARS(46)     
-          PSIV = EXTRAPARS(47)      
-          PLANTK = EXTRAPARS(48)      
+          SWPEXP = EXTRAPARS(39)
+          FSOIL =EXTRAPARS(40)
+          G0 = EXTRAPARS(41)
+          D0L = EXTRAPARS(42)
+          GAMMA = EXTRAPARS(43)
+          G1 = EXTRAPARS(44)
+          WLEAF =  EXTRAPARS(45)
+          SF = EXTRAPARS(46)
+          PSIV = EXTRAPARS(47)
+          PLANTK = EXTRAPARS(48)
           WEIGHTEDSWP =EXTRAPARS(49)
-          HMSHAPE = EXTRAPARS(50) 
+          HMSHAPE = EXTRAPARS(50)
           VPARA = EXTRAPARS(51)
           VPARB = EXTRAPARS(52)
           VPARC = EXTRAPARS(53)
           VPDMIN = EXTRAPARS(54)
           GK = EXTRAPARS(55)
-          
+
           ISMAESPA = .TRUE.
 
         MINLEAFWP = 0  ! Not used in tuzet.
         CI = 0
         KTOT = 0  ! output, not needed.
-        
+
         CALL PSTRANSP(iday,ihour,RDFIPT,TUIPT,TDIPT,RNET,WIND,PAR,TAIR,TMOVE,CA,RH,VPD,VMFD,PRESS,JMAX25, &
              IECO,EAVJ,EDVJ,DELSJ,VCMAX25,EAVC,EDVC,DELSC,TVJUP,TVJDN,THETA,AJQ,RD0, &
              Q10F,K10F,RTEMP,DAYRESP,TBELOW,MODELGS,WSOILMETHOD,EMAXLEAF,SOILMOISTURE,    &
              SMD1,SMD2,WC1,WC2,SOILDATA,SWPEXP,FSOIL,G0,D0L,GAMMA,VPDMIN,G1,GK,WLEAF,NSIDES,   &
              VPARA,VPARB,VPARC,VFUN,SF,PSIV,ITERMAX,GSC,ALEAF,RD,ET,FHEAT,  &
              TLEAF,GBH,PLANTK,TOTSOILRES,MINLEAFWP, WEIGHTEDSWP,KTOT,HMSHAPE,PSILIN,PSIL,ETEST,CI,ISMAESPA)
-        
+
         PSILOBJFUN = PSILIN - PSIL
 
 END
